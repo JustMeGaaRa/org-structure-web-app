@@ -20,6 +20,8 @@ import {
   Save,
   ImageIcon,
   Square,
+  Menu,
+  X,
 } from "lucide-react";
 import { Track } from "./Track";
 import { RoleCard } from "./RoleCard";
@@ -28,15 +30,39 @@ import { RoleCard } from "./RoleCard";
  * Main App
  */
 export default function App() {
+  const [orgs, setOrgs] = useState(() => {
+    const saved = localStorage.getItem("org_list");
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        id: "o1",
+        name: localStorage.getItem("org_name") || "Untitled Organization",
+      },
+    ];
+  });
+  const [currentOrgId, setCurrentOrgId] = useState(() => {
+    return localStorage.getItem("org_current_id") || "o1";
+  });
+  const [isOrgMenuOpen, setIsOrgMenuOpen] = useState(false);
+
   const [currentPage, setCurrentPage] = useState(() => {
     return localStorage.getItem("org_currentPage") || "canvas";
   });
   const [cards, setCards] = useState(() => {
-    const saved = localStorage.getItem("org_cards");
+    const saved = localStorage.getItem(`org_${currentOrgId}_cards`);
+    // Fallback to legacy key for first load
+    if (!saved && currentOrgId === "o1") {
+      const legacy = localStorage.getItem("org_cards");
+      return legacy ? JSON.parse(legacy) : [];
+    }
     return saved ? JSON.parse(saved) : [];
   });
   const [tracks, setTracks] = useState(() => {
-    const saved = localStorage.getItem("org_tracks");
+    const saved = localStorage.getItem(`org_${currentOrgId}_tracks`);
+    if (!saved && currentOrgId === "o1") {
+      const legacy = localStorage.getItem("org_tracks");
+      return legacy ? JSON.parse(legacy) : [];
+    }
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -56,7 +82,11 @@ export default function App() {
   const [viewMode, setViewMode] = useState("chart");
   const [toolMode, setToolMode] = useState("select");
   const [transform, setTransform] = useState(() => {
-    const saved = localStorage.getItem("org_transform");
+    const saved = localStorage.getItem(`org_${currentOrgId}_transform`);
+    if (!saved && currentOrgId === "o1") {
+      const legacy = localStorage.getItem("org_transform");
+      return legacy ? JSON.parse(legacy) : { x: 0, y: 0, scale: 1 };
+    }
     return saved ? JSON.parse(saved) : { x: 0, y: 0, scale: 1 };
   });
   const [isPanning, setIsPanning] = useState(false);
@@ -67,7 +97,8 @@ export default function App() {
   const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [orgName, setOrgName] = useState(() => {
-    return localStorage.getItem("org_name") || "Untitled Organization";
+    const org = orgs.find((o) => o.id === currentOrgId);
+    return org ? org.name : "Untitled Organization";
   });
 
   // State to track library tab specifically
@@ -76,7 +107,32 @@ export default function App() {
   });
 
   const [roleTemplates, setRoleTemplates] = useState(() => {
-    const saved = localStorage.getItem("org_role_templates");
+    const saved = localStorage.getItem(`org_${currentOrgId}_role_templates`);
+    if (!saved && currentOrgId === "o1") {
+      const legacy = localStorage.getItem("org_role_templates");
+      return legacy
+        ? JSON.parse(legacy)
+        : [
+            {
+              id: "r1",
+              role: "Chief Executive",
+              summary:
+                "Strategic vision and high-level decision making for the entire organization.",
+            },
+            {
+              id: "r2",
+              role: "Engineering Lead",
+              summary:
+                "Oversees technical implementation, roadmap, and core platform architecture.",
+            },
+            {
+              id: "r3",
+              role: "Product Designer",
+              summary:
+                "Ensures user-centricity through rigorous research and visual consistency.",
+            },
+          ];
+    }
     return saved
       ? JSON.parse(saved)
       : [
@@ -102,7 +158,26 @@ export default function App() {
   });
 
   const [peopleTemplates, setPeopleTemplates] = useState(() => {
-    const saved = localStorage.getItem("org_people_templates");
+    const saved = localStorage.getItem(`org_${currentOrgId}_people_templates`);
+    if (!saved && currentOrgId === "o1") {
+      const legacy = localStorage.getItem("org_people_templates");
+      return legacy
+        ? JSON.parse(legacy)
+        : [
+            {
+              id: "p1",
+              name: "Alex Rivera",
+              imageUrl:
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
+            },
+            {
+              id: "p2",
+              name: "Sarah Chen",
+              imageUrl:
+                "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
+            },
+          ];
+    }
     return saved
       ? JSON.parse(saved)
       : [
@@ -372,23 +447,63 @@ export default function App() {
     currentPage,
   ]);
 
+  const switchOrg = (id) => {
+    localStorage.setItem("org_current_id", id);
+    window.location.reload();
+  };
+
+  const createNewOrg = () => {
+    const newId = `o-${Date.now()}`;
+    const newOrg = { id: newId, name: "New Organization" };
+    const updatedOrgs = [...orgs, newOrg];
+    localStorage.setItem("org_list", JSON.stringify(updatedOrgs));
+    switchOrg(newId);
+  };
+
+  const deleteOrg = (e, id) => {
+    e.stopPropagation();
+    if (orgs.length <= 1) return;
+    const updatedOrgs = orgs.filter((o) => o.id !== id);
+    setOrgs(updatedOrgs);
+    if (currentOrgId === id) {
+      localStorage.setItem("org_list", JSON.stringify(updatedOrgs));
+      switchOrg(updatedOrgs[0].id);
+    }
+  };
+
+  const handleUpdateOrgName = (newName) => {
+    setOrgName(newName);
+    setOrgs((prev) =>
+      prev.map((o) => (o.id === currentOrgId ? { ...o, name: newName } : o)),
+    );
+  };
+
   // Persist state to localStorage
   useEffect(() => {
+    localStorage.setItem("org_list", JSON.stringify(orgs));
+    localStorage.setItem("org_current_id", currentOrgId);
     localStorage.setItem("org_currentPage", currentPage);
-    localStorage.setItem("org_cards", JSON.stringify(cards));
-    localStorage.setItem("org_tracks", JSON.stringify(tracks));
+    localStorage.setItem(`org_${currentOrgId}_cards`, JSON.stringify(cards));
+    localStorage.setItem(`org_${currentOrgId}_tracks`, JSON.stringify(tracks));
     localStorage.setItem("org_isSidebarOpen", JSON.stringify(isSidebarOpen));
     localStorage.setItem("org_activeTab", activeTab);
-    localStorage.setItem("org_transform", JSON.stringify(transform));
-    localStorage.setItem("org_defaultCardSize", defaultCardSize);
-    localStorage.setItem("org_role_templates", JSON.stringify(roleTemplates));
     localStorage.setItem(
-      "org_people_templates",
+      `org_${currentOrgId}_transform`,
+      JSON.stringify(transform),
+    );
+    localStorage.setItem("org_defaultCardSize", defaultCardSize);
+    localStorage.setItem(
+      `org_${currentOrgId}_role_templates`,
+      JSON.stringify(roleTemplates),
+    );
+    localStorage.setItem(
+      `org_${currentOrgId}_people_templates`,
       JSON.stringify(peopleTemplates),
     );
     localStorage.setItem("org_libraryEditorTab", libraryEditorTab);
-    localStorage.setItem("org_name", orgName);
   }, [
+    orgs,
+    currentOrgId,
     currentPage,
     cards,
     tracks,
@@ -399,7 +514,6 @@ export default function App() {
     roleTemplates,
     peopleTemplates,
     libraryEditorTab,
-    orgName,
   ]);
 
   /**
@@ -730,26 +844,78 @@ export default function App() {
             className={`flex-grow relative bg-slate-100 overflow-hidden outline-none ${toolMode === "pan" ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
           >
             {/* Organization Name Header */}
-            <div className="absolute top-6 left-6 z-40">
-              <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-lg flex items-center gap-3 group">
-                <div className="p-2 bg-blue-50 rounded-xl text-blue-600">
-                  <Briefcase size={18} />
-                </div>
-                <div className="flex flex-col">
-                  <input
-                    type="text"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    className="bg-transparent border-none outline-none text-sm font-bold text-slate-800 p-0 focus:ring-0 w-48"
-                    placeholder="Organization Name"
-                  />
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-                      Saved to Browser
-                    </span>
-                    <div className="w-1 h-1 rounded-full bg-green-500" />
+            <div className="absolute top-6 left-6 z-50">
+              <div className="relative">
+                <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-lg flex items-center gap-3 group">
+                  <button
+                    onClick={() => setIsOrgMenuOpen(!isOrgMenuOpen)}
+                    className={`p-2 rounded-xl transition-colors ${isOrgMenuOpen ? "bg-slate-900 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                  >
+                    <Menu size={18} />
+                  </button>
+                  <div className="flex flex-col">
+                    <input
+                      type="text"
+                      value={orgName}
+                      onChange={(e) => handleUpdateOrgName(e.target.value)}
+                      className="bg-transparent border-none outline-none text-sm font-bold text-slate-800 p-0 focus:ring-0 w-48"
+                      placeholder="Organization Name"
+                    />
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                        Organization
+                      </span>
+                      <div className="w-1 h-1 rounded-full bg-green-500" />
+                    </div>
                   </div>
                 </div>
+
+                {/* Organization Switcher Menu */}
+                {isOrgMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="max-h-60 overflow-y-auto">
+                      {orgs.map((o) => (
+                        <div
+                          key={o.id}
+                          onClick={() => switchOrg(o.id)}
+                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${o.id === currentOrgId ? "bg-blue-50 border border-blue-100" : "hover:bg-slate-50 border border-transparent"}`}
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div
+                              className={`w-2 h-2 rounded-full flex-shrink-0 ${o.id === currentOrgId ? "bg-blue-500" : "bg-slate-200"}`}
+                            />
+                            <span
+                              className={`text-xs font-bold truncate ${o.id === currentOrgId ? "text-blue-700" : "text-slate-600"}`}
+                            >
+                              {o.name}
+                            </span>
+                          </div>
+                          {orgs.length > 1 && (
+                            <button
+                              onClick={(e) => deleteOrg(e, o.id)}
+                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={createNewOrg}
+                        className="w-full flex items-center gap-3 p-3 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all group"
+                      >
+                        <div className="p-1 bg-slate-100 group-hover:bg-blue-100 rounded-lg transition-colors">
+                          <Plus size={14} />
+                        </div>
+                        <span className="text-xs font-bold">
+                          Create New Org
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

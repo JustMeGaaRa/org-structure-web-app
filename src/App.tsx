@@ -66,6 +66,9 @@ export default function App() {
   });
   const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [orgName, setOrgName] = useState(() => {
+    return localStorage.getItem("org_name") || "Untitled Organization";
+  });
 
   // State to track library tab specifically
   const [libraryEditorTab, setLibraryEditorTab] = useState(() => {
@@ -384,6 +387,7 @@ export default function App() {
       JSON.stringify(peopleTemplates),
     );
     localStorage.setItem("org_libraryEditorTab", libraryEditorTab);
+    localStorage.setItem("org_name", orgName);
   }, [
     currentPage,
     cards,
@@ -395,6 +399,7 @@ export default function App() {
     roleTemplates,
     peopleTemplates,
     libraryEditorTab,
+    orgName,
   ]);
 
   /**
@@ -724,6 +729,30 @@ export default function App() {
             onWheel={handleWheel}
             className={`flex-grow relative bg-slate-100 overflow-hidden outline-none ${toolMode === "pan" ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
           >
+            {/* Organization Name Header */}
+            <div className="absolute top-6 left-6 z-40">
+              <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-lg flex items-center gap-3 group">
+                <div className="p-2 bg-blue-50 rounded-xl text-blue-600">
+                  <Briefcase size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <input
+                    type="text"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="bg-transparent border-none outline-none text-sm font-bold text-slate-800 p-0 focus:ring-0 w-48"
+                    placeholder="Organization Name"
+                  />
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                      Saved to Browser
+                    </span>
+                    <div className="w-1 h-1 rounded-full bg-green-500" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div
               className="absolute inset-0 pointer-events-none transition-transform duration-75 ease-out"
               style={{

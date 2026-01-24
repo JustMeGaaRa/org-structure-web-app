@@ -337,8 +337,8 @@ export default function App() {
 
     // Handle Resizing
     if (resizingId) {
-      const mouseX = e.clientX / transform.scale;
-      const mouseY = e.clientY / transform.scale;
+      const mouseX = (e.clientX - transform.x) / transform.scale;
+      const mouseY = (e.clientY - transform.y) / transform.scale;
       setTracks((prev) =>
         prev.map((t) => {
           if (t.id !== resizingId) return t;

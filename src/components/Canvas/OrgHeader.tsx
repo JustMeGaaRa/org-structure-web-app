@@ -24,7 +24,10 @@ export const OrgHeader = ({
   const [isOrgMenuOpen, setIsOrgMenuOpen] = useState(false);
 
   return (
-    <div className="absolute top-6 left-6 z-50">
+    <div
+      className="absolute top-6 left-6 z-50"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className="relative">
         <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-lg flex items-center gap-3 group">
           <button

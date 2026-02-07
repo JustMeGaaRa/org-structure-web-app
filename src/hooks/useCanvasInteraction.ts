@@ -10,16 +10,16 @@ export function useCanvasInteraction(
   setTracks: (
     tracks: TrackData[] | ((prev: TrackData[]) => TrackData[]),
   ) => void,
-  toolMode: "select" | "pan",
+  toolMode: "select" | "pan" | "track",
   canvasRef: React.RefObject<HTMLDivElement | null>,
   deleteZoneRef: React.RefObject<HTMLDivElement | null>,
 ) {
   const GRID_SIZE = 20;
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [draggingType, setDraggingType] = useState<"card" | "track" | null>(
-    null,
-  );
+  const [draggingType, setDraggingType] = useState<
+    "card" | "track" | "track-create" | null
+  >(null);
   const [resizingId, setResizingId] = useState<string | null>(null);
   const [resizingSide, setResizingSide] = useState<
     "top" | "bottom" | "left" | "right" | null
@@ -138,8 +138,59 @@ export function useCanvasInteraction(
         const dx = e.clientX - lastPanPoint.x;
         const dy = e.clientY - lastPanPoint.y;
         setTransform((prev) => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-        setLastPanPoint({ x: e.clientX, y: e.clientY }); // update state
-        lastPanPointRef.current = { x: e.clientX, y: e.clientY }; // update ref immediately for next frame
+        setLastPanPoint({ x: e.clientX, y: e.clientY });
+        lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
+
+      // Handle Track Creation (draggingType === 'track-create')
+      const createType = draggingTypeRef.current;
+      const createId = draggingIdRef.current;
+      // We check draggingId above anyway
+
+      if (createType === "track-create" && createId) {
+        const transform = transformRef.current;
+        const startOffset = offsetRef.current; // Contains {x: startX, y: startY}
+
+        const mouseX = (e.clientX - transform.x) / transform.scale;
+        const mouseY = (e.clientY - transform.y) / transform.scale;
+
+        // Snap to grid
+        const currentGridX = Math.round(mouseX / GRID_SIZE) * GRID_SIZE;
+        const currentGridY = Math.round(mouseY / GRID_SIZE) * GRID_SIZE;
+
+        setTracks((prev) =>
+          prev.map((t) => {
+            if (t.id !== createId) return t;
+
+            // Calculate new geometry
+            // startOffset.{x,y} is the Top-Left corner of where we started.
+            // currentGrid.{x,y} is where we are now.
+            // We need to handle dragging in any direction (top-left, bottom-right etc).
+
+            const startX = startOffset.x;
+            const startY = startOffset.y;
+
+            const newX = Math.min(startX, currentGridX);
+            const newY = Math.min(startY, currentGridY);
+            const newWidth = Math.abs(currentGridX - startX);
+            const newHeight = Math.abs(currentGridY - startY);
+
+            // Enforce minimum size if desired? Or allow small? Resize logic enforces >= 100.
+            // Let's enforce min size 100 on creation as well to match resize logic?
+            // Or allow smaller during creation and fix on mouse up?
+            // The user says "release to stop drawing". Often lets you draw small.
+            // Let's stick to simple logic for now.
+
+            return {
+              ...t,
+              x: newX,
+              y: newY,
+              width: Math.max(20, newWidth), // Arbitrary min size 20 to avoid hidden tracks
+              height: Math.max(20, newHeight),
+            };
+          }),
+        );
         return;
       }
 
@@ -231,11 +282,24 @@ export function useCanvasInteraction(
     const draggingType = draggingTypeRef.current;
     const isOverDeleteZone = isOverDeleteZoneRef.current;
 
-    if (draggingId && isOverDeleteZone) {
-      if (draggingType === "card")
-        setCards((prev) => prev.filter((c) => c.id !== draggingId));
-      else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
+    if (draggingId) {
+      if (isOverDeleteZone) {
+        if (draggingType === "card")
+          setCards((prev) => prev.filter((c) => c.id !== draggingId));
+        else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
+      } else if (draggingType === "track-create") {
+        // Remove if too small (< 10x10)
+        setTracks((prev) =>
+          prev.filter((t) => {
+            if (t.id === draggingId) {
+              return t.width >= 50 && t.height >= 50;
+            }
+            return true;
+          }),
+        );
+      }
     }
+
     setDraggingId(null);
     setDraggingType(null);
     setResizingId(null);
@@ -255,13 +319,53 @@ export function useCanvasInteraction(
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  // Main canvas mouse down used for panning
+  // Main canvas mouse down used for panning OR creating track
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Pan Mode
     if (toolMode === "pan" || e.button === 1) {
       setIsPanning(true);
       const startPoint = { x: e.clientX, y: e.clientY };
       setLastPanPoint(startPoint);
       lastPanPointRef.current = startPoint;
+      return;
+    }
+
+    // Track Creation Mode
+    if (toolMode === "track") {
+      if (!canvasRef.current) return;
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const id = `track-${Date.now()}`;
+
+      const mouseX =
+        (e.clientX - canvasRect.left - transform.x) / transform.scale;
+      const mouseY =
+        (e.clientY - canvasRect.top - transform.y) / transform.scale;
+
+      // Snap to grid
+      const gridX = Math.round(mouseX / GRID_SIZE) * GRID_SIZE;
+      const gridY = Math.round(mouseY / GRID_SIZE) * GRID_SIZE;
+
+      const newTrack: TrackData = {
+        id,
+        x: gridX,
+        y: gridY,
+        width: 0,
+        height: 0,
+      };
+
+      setTracks((prev) => [...prev, newTrack]);
+      setResizingId(id); // Reuse resizing logic for "active interaction" state tracking if needed, or mostly just for ID.
+      setDraggingType("track-create"); // Special internal type or just use a new Ref?
+      // Actually let's just use resizingId and a new way to identify creation.
+      // Re-using resizingId is fine, but I need to distinguish "resizing existing" vs "creating".
+      // Let's use `draggingType` = 'track-create'.
+
+      setDraggingId(id);
+      setDraggingType("track-create");
+
+      // Store start point in offset for convenience (using logic: startX, startY)
+      setOffset({ x: gridX, y: gridY });
+      offsetRef.current = { x: gridX, y: gridY };
     }
   };
 

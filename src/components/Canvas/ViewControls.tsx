@@ -7,7 +7,10 @@ interface ViewControlsProps {
 
 export const ViewControls = ({ viewMode, setViewMode }: ViewControlsProps) => {
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40">
+    <div
+      className="absolute top-6 left-1/2 -translate-x-1/2 z-40"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className="flex bg-white/80 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-lg">
         <button
           onClick={() => setViewMode("structure")}

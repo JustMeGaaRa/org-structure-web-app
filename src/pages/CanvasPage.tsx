@@ -42,7 +42,9 @@ export const CanvasPage = ({
 }: CanvasPageProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const deleteZoneRef = useRef<HTMLDivElement>(null);
-  const [toolMode, setToolMode] = useState<"select" | "pan">("select");
+  const [toolMode, setToolMode] = useState<"select" | "pan" | "track">(
+    "select",
+  );
   const [viewMode, setViewMode] = useState<"structure" | "chart">("chart");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -74,26 +76,6 @@ export const CanvasPage = ({
     canvasRef,
     deleteZoneRef,
   );
-
-  const addTrack = () => {
-    if (!canvasRef.current) return;
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    const id = `track-${Date.now()}`;
-    const centerX = (-transform.x + canvasRect.width / 2) / transform.scale;
-    const centerY = (-transform.y + canvasRect.height / 2) / transform.scale;
-
-    setTracks((prev) => [
-      ...prev,
-      {
-        id,
-        x: centerX - 200,
-        y: centerY - 150,
-        width: 400,
-        height: 300,
-      },
-    ]);
-    setToolMode("select");
-  };
 
   const toggleCardSize = (cardId: string) => {
     setCards((prev) =>
@@ -226,7 +208,6 @@ export const CanvasPage = ({
           ref={deleteZoneRef}
           toolMode={toolMode}
           setToolMode={setToolMode}
-          onAddTrack={addTrack}
           isDragging={!!draggingId}
           isOverDeleteZone={isOverDeleteZone}
         />

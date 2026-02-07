@@ -27,7 +27,6 @@ export function useOrganization() {
   const switchOrg = useCallback(
     (id: string) => {
       setCurrentOrgId(id);
-      window.location.reload(); // The original code did reload.
     },
     [setCurrentOrgId],
   );

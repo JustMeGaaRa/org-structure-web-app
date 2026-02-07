@@ -4,20 +4,15 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { CanvasPage } from "./pages/CanvasPage";
 import { LibraryEditor } from "./pages/LibraryEditor";
 
-/**
- * Main App
- */
-export default function App() {
-  const {
-    orgs,
-    currentOrgId,
-    orgName,
-    switchOrg,
-    createNewOrg,
-    deleteOrg,
-    updateOrgName,
-  } = useOrganization();
-
+function AppContent({
+  orgs,
+  currentOrgId,
+  orgName,
+  switchOrg,
+  createNewOrg,
+  deleteOrg,
+  updateOrgName,
+}: ReturnType<typeof useOrganization>) {
   const {
     roleTemplates,
     setRoleTemplates,
@@ -34,6 +29,7 @@ export default function App() {
     <>
       {currentPage === "canvas" ? (
         <CanvasPage
+          key={currentOrgId}
           orgs={orgs}
           currentOrgId={currentOrgId}
           orgName={orgName}
@@ -58,4 +54,13 @@ export default function App() {
       )}
     </>
   );
+}
+
+/**
+ * Main App
+ */
+export default function App() {
+  const orgData = useOrganization();
+
+  return <AppContent key={orgData.currentOrgId} {...orgData} />;
 }

@@ -136,7 +136,7 @@ export const CanvasPage = ({
                 trackData={track}
                 isDragging={draggingId === track.id && draggingType === "track"}
                 isResizing={resizingId === track.id}
-                onMouseDown={handleStartDragTrack}
+                onPointerDown={handleStartDragTrack}
                 onResizeStart={handleResizeStart}
                 isOverDeleteZone={
                   isOverDeleteZone &&
@@ -156,7 +156,7 @@ export const CanvasPage = ({
                   draggingId === card.id &&
                   draggingType === "card"
                 }
-                onMouseDown={(e: React.MouseEvent<HTMLDivElement>) =>
+                onPointerDown={(e: React.PointerEvent<HTMLDivElement>) =>
                   handleStartDragCard(e, card.id)
                 }
                 onPersonDrop={(

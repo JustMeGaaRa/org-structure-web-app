@@ -11,7 +11,7 @@ import { RoleMenu } from "./RoleMenu";
 export const RoleCard: FC<{
   roleData: Role;
   isDragging: boolean;
-  onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
   onPersonDrop: (
     roleId: string,
     personData: { id: string; name: string; imageUrl: string },
@@ -24,7 +24,7 @@ export const RoleCard: FC<{
 }> = ({
   roleData,
   isDragging,
-  onMouseDown,
+  onPointerDown,
   onPersonDrop,
   onApprove,
   onClear,
@@ -70,7 +70,7 @@ export const RoleCard: FC<{
 
   return (
     <div
-      onMouseDown={onMouseDown}
+      onPointerDown={onPointerDown}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

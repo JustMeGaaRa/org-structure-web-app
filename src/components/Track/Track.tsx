@@ -15,9 +15,9 @@ export const Track: FC<{
   };
   isDragging: boolean;
   isResizing: boolean;
-  onMouseDown: (e: React.MouseEvent<HTMLDivElement>, trackId: string) => void;
+  onPointerDown: (e: React.PointerEvent<HTMLDivElement>, trackId: string) => void;
   onResizeStart: (
-    e: React.MouseEvent<HTMLDivElement>,
+    e: React.PointerEvent<HTMLDivElement>,
     trackId: string,
     direction: "top" | "bottom" | "left" | "right",
   ) => void;
@@ -26,14 +26,14 @@ export const Track: FC<{
   trackData,
   isDragging,
   isResizing,
-  onMouseDown,
+  onPointerDown,
   onResizeStart,
   isOverDeleteZone,
 }) => {
   const { x, y, width, height } = trackData;
 
   const handleResize = (
-    e: React.MouseEvent<HTMLDivElement>,
+    e: React.PointerEvent<HTMLDivElement>,
     direction: "top" | "bottom" | "left" | "right",
   ) => {
     onResizeStart(e, trackData.id, direction);
@@ -41,7 +41,7 @@ export const Track: FC<{
 
   return (
     <div
-      onMouseDown={(e) => onMouseDown(e, trackData.id)}
+      onPointerDown={(e) => onPointerDown(e, trackData.id)}
       className={`absolute border-2 border-dashed rounded-2xl transition-shadow group select-none ${
         isDragging
           ? `shadow-xl border-blue-400 bg-blue-50/10 z-20 ${isOverDeleteZone ? "border-red-500 opacity-50" : ""}`

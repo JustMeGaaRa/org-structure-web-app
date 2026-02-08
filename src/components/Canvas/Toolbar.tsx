@@ -32,7 +32,7 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(
     return (
       <div
         className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-40 w-[90%] md:w-auto flex justify-center"
-        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <div
           ref={ref}

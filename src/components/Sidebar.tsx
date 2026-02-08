@@ -22,7 +22,7 @@ interface SidebarProps {
   onAddPersonTemplate: (name: string) => void;
   onDeleteRoleTemplate?: (id: string) => void;
   onDeletePersonTemplate?: (id: string) => void;
-  onRoleDragStart: (e: React.MouseEvent, role: RoleTemplate) => void;
+  onRoleDragStart: (e: React.PointerEvent, role: RoleTemplate) => void;
 }
 
 export const Sidebar = ({
@@ -144,7 +144,7 @@ export const Sidebar = ({
             ? filteredRoles.map((r) => (
                 <div
                   key={r.id}
-                  onMouseDown={(e) => onRoleDragStart(e, r)}
+                  onPointerDown={(e) => onRoleDragStart(e, r)}
                   className="group relative p-4 border border-slate-100 bg-slate-50 rounded-xl cursor-grab hover:border-blue-200 hover:bg-blue-50 transition-all"
                   style={{ userSelect: "none" }}
                 >
@@ -154,7 +154,7 @@ export const Sidebar = ({
                   </p>
                   {onDeleteRoleTemplate && (
                     <button
-                      onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
+                      onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteRoleTemplate(r.id);
@@ -188,7 +188,7 @@ export const Sidebar = ({
                   </div>
                   {onDeletePersonTemplate && (
                     <button
-                      onMouseDown={(e) => e.stopPropagation()} // Prevent drag start? Draggable works via dragstart.
+                      onPointerDown={(e) => e.stopPropagation()} // Prevent drag start? Draggable works via dragstart.
                       // For draggable element, buttons inside might need preventDefault on mousedown or dragstart stop propagation.
                       // Usually click works fine if we don't drag.
                       onClick={(e) => {

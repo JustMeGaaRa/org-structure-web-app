@@ -30,7 +30,7 @@ export const OrgHeader = ({
   return (
     <div
       className="absolute top-6 left-6 right-6 md:right-auto md:w-auto z-50 pointer-events-none md:pointer-events-auto"
-      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="relative pointer-events-auto">
         <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-200/60 shadow-xl flex items-center justify-between md:justify-start gap-3 group">

@@ -319,14 +319,15 @@ export function useCanvasInteraction(
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  // Main canvas mouse down used for panning OR creating track
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Main canvas pointer down used for panning OR creating track
+  const handlePointerDown = (e: React.PointerEvent) => {
     // Pan Mode
     if (toolMode === "pan" || e.button === 1) {
       setIsPanning(true);
       const startPoint = { x: e.clientX, y: e.clientY };
       setLastPanPoint(startPoint);
       lastPanPointRef.current = startPoint;
+      e.currentTarget.setPointerCapture(e.pointerId); // Capture pointer for smooth panning
       return;
     }
 
@@ -366,6 +367,8 @@ export function useCanvasInteraction(
       // Store start point in offset for convenience (using logic: startX, startY)
       setOffset({ x: gridX, y: gridY });
       offsetRef.current = { x: gridX, y: gridY };
+
+      e.currentTarget.setPointerCapture(e.pointerId); // Capture pointer
     }
   };
 
@@ -414,7 +417,7 @@ export function useCanvasInteraction(
     handleStartDragCard,
     handleStartDragTrack,
     handleResizeStart,
-    handleMouseDown,
+    handlePointerDown,
     handleWheel,
     handleZoom,
     startDragExternal,

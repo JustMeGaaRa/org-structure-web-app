@@ -95,8 +95,7 @@ export const CanvasPage = ({
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden relative">
       <main
         ref={canvasRef}
-        onMouseDown={handlePointerDown}
-        onTouchStart={handlePointerDown}
+        onPointerDown={handlePointerDown}
         onWheel={handleWheel}
         className={`flex-grow relative bg-slate-100 overflow-hidden outline-none touch-none ${
           toolMode === "pan"

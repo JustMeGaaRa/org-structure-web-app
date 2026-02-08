@@ -7,7 +7,7 @@ import {
   Search,
   Plus,
   AlertCircle,
-  ChevronLeft,
+  X,
   Trash2,
 } from "lucide-react";
 import type { RoleTemplate, Person } from "../types";
@@ -71,30 +71,25 @@ export const Sidebar = ({
     e.dataTransfer.setData("person", JSON.stringify(person));
   };
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => onToggle(true)}
-        className="absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30"
-      >
-        <ChevronLeft size={20} className="text-slate-600" />
-      </button>
-    );
-  }
-
   return (
-    <aside className="w-80 bg-white border-l border-slate-200 transition-all duration-300 flex flex-col z-20 shadow-xl overflow-hidden h-full">
-      <div className="w-80 flex flex-col h-full">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+    <div
+      className={`absolute top-6 right-6 bottom-6 flex flex-col z-50 transition-all duration-300 ease-in-out ${
+        isOpen ? "translate-x-0" : "translate-x-[120%] pointer-events-none"
+      }`}
+    >
+      <div className="w-80 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl flex flex-col h-full overflow-hidden relative">
+        <button
+          onClick={() => onToggle(false)}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all z-10"
+          aria-label="Close sidebar"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white/50">
           <h2 className="text-lg font-bold text-slate-800 tracking-tight">
             Library
           </h2>
-          <button
-            onClick={() => onToggle(false)}
-            className="p-1.5 hover:bg-slate-100 rounded-md"
-          >
-            <ChevronRight size={18} className="text-slate-400" />
-          </button>
         </div>
 
         <div className="flex px-6 pt-2 gap-4 border-b border-slate-50">
@@ -224,6 +219,6 @@ export const Sidebar = ({
           </button>
         </div>
       </div>
-    </aside>
+    </div>
   );
 };

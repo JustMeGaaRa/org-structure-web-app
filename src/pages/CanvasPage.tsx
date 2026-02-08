@@ -92,7 +92,7 @@ export const CanvasPage = ({
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden relative">
       <main
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -216,14 +216,16 @@ export const CanvasPage = ({
           isOverDeleteZone={isOverDeleteZone}
         />
 
-        {!isSidebarOpen && (
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30"
-          >
-            <ChevronLeft size={20} className="text-slate-600" />
-          </button>
-        )}
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className={`absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30 transition-all duration-300 ${
+            isSidebarOpen
+              ? "opacity-0 scale-90 pointer-events-none"
+              : "opacity-100 scale-100"
+          }`}
+        >
+          <ChevronLeft size={20} className="text-slate-600" />
+        </button>
       </main>
 
       <Sidebar

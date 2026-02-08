@@ -17,12 +17,12 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(
       >
         <div
           ref={ref}
-          className={`flex items-center px-2 py-2 rounded-2xl shadow-2xl transition-all duration-300 ${
+          className={`flex items-center p-1.5 rounded-2xl shadow-xl transition-all duration-300 ${
             isDragging
               ? isOverDeleteZone
                 ? "bg-red-500 scale-110 w-48 justify-center text-white"
                 : "bg-slate-900 w-48 justify-center text-white"
-              : "bg-white border border-slate-200"
+              : "bg-white/90 backdrop-blur-sm border border-slate-200/60"
           }`}
         >
           {isDragging ? (

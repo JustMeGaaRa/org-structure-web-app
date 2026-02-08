@@ -29,7 +29,7 @@ export const OrgHeader = ({
       onMouseDown={(e) => e.stopPropagation()}
     >
       <div className="relative">
-        <div className="bg-white px-2 py-2 rounded-2xl border border-slate-200 shadow-lg flex items-center gap-3 group">
+        <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-200/60 shadow-xl flex items-center gap-3 group">
           <button
             onClick={() => setIsOrgMenuOpen(!isOrgMenuOpen)}
             className={`p-2 rounded-xl transition-colors ${isOrgMenuOpen ? "bg-slate-900 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}

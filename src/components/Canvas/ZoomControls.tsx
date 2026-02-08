@@ -18,7 +18,7 @@ export const ZoomControls = ({
       className="absolute bottom-8 right-8 z-40"
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl flex items-center p-1 gap-1">
+      <div className="bg-white/90 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-xl flex items-center p-1.5 gap-1">
         <button
           onClick={onZoomOut}
           className="p-2 hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition-colors"

@@ -51,7 +51,7 @@ export const RoleMenu: FC<RoleMenuProps> = ({
         <MoreHorizontal size={18} />
       </button>
       {showMenu && (
-        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-100 shadow-xl rounded-xl py-1 z-[60] animate-in fade-in zoom-in duration-150">
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-100 shadow-xl rounded-xl py-1 z-60 animate-in fade-in zoom-in duration-150">
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => {

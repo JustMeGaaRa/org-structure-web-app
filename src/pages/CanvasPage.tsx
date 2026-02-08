@@ -62,8 +62,11 @@ export const CanvasPage = ({
     resizingId,
     isPanning,
     isOverDeleteZone,
+    draggingPersonData,
+    pointerPos,
     handleStartDragCard,
     handleStartDragTrack,
+    handleStartDragPerson,
     handleResizeStart,
     handlePointerDown,
     handleWheel,
@@ -97,7 +100,7 @@ export const CanvasPage = ({
         ref={canvasRef}
         onPointerDown={handlePointerDown}
         onWheel={handleWheel}
-        className={`flex-grow relative bg-slate-100 overflow-hidden outline-none touch-none ${
+        className={`grow relative bg-slate-100 overflow-hidden outline-none touch-none ${
           toolMode === "pan"
             ? "cursor-grab active:cursor-grabbing"
             : "cursor-default"
@@ -224,6 +227,26 @@ export const CanvasPage = ({
           onToggleLibrary={() => setIsSidebarOpen((prev) => !prev)}
         />
 
+        {draggingPersonData && (
+          <div
+            className="fixed pointer-events-none z-50 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl shadow-2xl border border-green-200"
+            style={{
+              left: `${pointerPos.x}px`,
+              top: `${pointerPos.y}px`,
+              transform: "translate(-50%, -100%) translateY(-20px)",
+            }}
+          >
+            <img
+              src={draggingPersonData.imageUrl}
+              className="w-8 h-8 rounded-full shadow-sm"
+              alt=""
+            />
+            <span className="text-xs font-bold text-slate-700">
+              {draggingPersonData.name}
+            </span>
+          </div>
+        )}
+
         <button
           onClick={() => setIsSidebarOpen(true)}
           className={`absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30 transition-all duration-300 hidden md:block ${
@@ -264,6 +287,7 @@ export const CanvasPage = ({
         }}
         onDeleteRoleTemplate={onDeleteRoleTemplate}
         onDeletePersonTemplate={onDeletePersonTemplate}
+        onPersonDragStart={handleStartDragPerson}
         onRoleDragStart={(e, roleTemplate) => {
           // Create the card
           if (!canvasRef.current) return;

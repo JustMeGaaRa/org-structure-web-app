@@ -84,7 +84,7 @@ export const LibraryEditor = ({
   };
 
   return (
-    <div className="flex-grow flex flex-col h-full bg-white animate-in fade-in duration-300">
+    <div className="grow flex flex-col h-full bg-white animate-in fade-in duration-300">
       <header className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center gap-4">
           <button
@@ -112,7 +112,7 @@ export const LibraryEditor = ({
         </button>
       </header>
 
-      <div className="flex-grow flex flex-col max-w-5xl mx-auto w-full p-8 overflow-hidden">
+      <div className="grow flex flex-col max-w-5xl mx-auto w-full p-8 overflow-hidden">
         <div className="flex gap-4 mb-8">
           <button
             onClick={() => setLibraryEditorTab("roles")}
@@ -134,7 +134,7 @@ export const LibraryEditor = ({
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto pr-4 space-y-4 pb-12">
+        <div className="grow overflow-y-auto pr-4 space-y-4 pb-12">
           {libraryEditorTab === "roles" ? (
             <div className="space-y-4">
               {roleTemplates.map((role) => (
@@ -244,7 +244,7 @@ export const LibraryEditor = ({
                             alt="Preview"
                           />
                         </div>
-                        <div className="flex-grow space-y-3">
+                        <div className="grow space-y-3">
                           <div>
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
                               Full Name

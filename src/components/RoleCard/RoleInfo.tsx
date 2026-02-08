@@ -16,7 +16,7 @@ export const RoleInfo: FC<RoleInfoProps> = ({
   assignedPerson,
 }) => {
   return (
-    <div className="flex flex-col flex-grow overflow-hidden">
+    <div className="flex flex-col grow overflow-hidden">
       <h2
         className={`font-bold text-slate-900 leading-tight truncate ${isSmall ? "text-sm" : "text-base"}`}
       >

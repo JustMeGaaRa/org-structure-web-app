@@ -23,6 +23,7 @@ interface SidebarProps {
   onDeleteRoleTemplate?: (id: string) => void;
   onDeletePersonTemplate?: (id: string) => void;
   onRoleDragStart: (e: React.PointerEvent, role: RoleTemplate) => void;
+  onPersonDragStart: (e: React.PointerEvent, person: Person) => void;
 }
 
 export const Sidebar = ({
@@ -36,6 +37,7 @@ export const Sidebar = ({
   onDeleteRoleTemplate,
   onDeletePersonTemplate,
   onRoleDragStart,
+  onPersonDragStart,
 }: SidebarProps) => {
   const [activeTab, setActiveTab] = useState<"roles" | "people">("roles");
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,10 +67,6 @@ export const Sidebar = ({
       onAddPersonTemplate(searchQuery.trim());
     }
     setSearchQuery("");
-  };
-
-  const handlePersonDragStart = (e: React.DragEvent, person: Person) => {
-    e.dataTransfer.setData("person", JSON.stringify(person));
   };
 
   return (
@@ -139,7 +137,7 @@ export const Sidebar = ({
             )}
           </form>
         </div>
-        <div className="flex-grow p-6 pt-0 space-y-3 overflow-y-auto">
+        <div className="grow p-6 pt-0 space-y-3 overflow-y-auto">
           {activeTab === "roles"
             ? filteredRoles.map((r) => (
                 <div
@@ -170,8 +168,7 @@ export const Sidebar = ({
             : filteredPeople.map((p) => (
                 <div
                   key={p.id}
-                  draggable
-                  onDragStart={(e) => handlePersonDragStart(e, p)}
+                  onPointerDown={(e) => onPersonDragStart(e, p)}
                   className="group relative p-3 border border-slate-100 bg-white rounded-xl cursor-grab hover:border-green-200 hover:bg-green-50 flex items-center gap-3 transition-all"
                   style={{ userSelect: "none" }}
                 >
@@ -188,9 +185,7 @@ export const Sidebar = ({
                   </div>
                   {onDeletePersonTemplate && (
                     <button
-                      onPointerDown={(e) => e.stopPropagation()} // Prevent drag start? Draggable works via dragstart.
-                      // For draggable element, buttons inside might need preventDefault on mousedown or dragstart stop propagation.
-                      // Usually click works fine if we don't drag.
+                      onPointerDown={(e) => e.stopPropagation()} // Prevent drag start?
                       onClick={(e) => {
                         e.stopPropagation(); // prevent drag selection if any
                         onDeletePersonTemplate(p.id);

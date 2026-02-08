@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { Role, TrackData, Transform, Point } from "../types";
+import type { Role, TrackData, Transform, Point, Person } from "../types";
 
 export function useCanvasInteraction(
   transform: Transform,
@@ -18,8 +18,13 @@ export function useCanvasInteraction(
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingType, setDraggingType] = useState<
-    "card" | "track" | "track-create" | null
+    "card" | "track" | "track-create" | "person" | null
   >(null);
+  const [draggingPersonData, setDraggingPersonData] = useState<Person | null>(
+    null,
+  );
+  const [pointerPos, setPointerPos] = useState<Point>({ x: 0, y: 0 });
+
   const [resizingId, setResizingId] = useState<string | null>(null);
   const [resizingSide, setResizingSide] = useState<
     "top" | "bottom" | "left" | "right" | null
@@ -40,6 +45,7 @@ export function useCanvasInteraction(
   const isPanningRef = useRef(isPanning);
   const draggingIdRef = useRef(draggingId);
   const draggingTypeRef = useRef(draggingType);
+  const draggingPersonDataRef = useRef(draggingPersonData);
   const resizingIdRef = useRef(resizingId);
   const resizingSideRef = useRef(resizingSide);
   const isOverDeleteZoneRef = useRef(isOverDeleteZone);
@@ -63,6 +69,9 @@ export function useCanvasInteraction(
   useEffect(() => {
     draggingTypeRef.current = draggingType;
   }, [draggingType]);
+  useEffect(() => {
+    draggingPersonDataRef.current = draggingPersonData;
+  }, [draggingPersonData]);
   useEffect(() => {
     resizingIdRef.current = resizingId;
   }, [resizingId]);
@@ -138,6 +147,9 @@ export function useCanvasInteraction(
   // Handlers for pointer events on Window
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {
+      // Update pointer position for previews
+      setPointerPos({ x: e.clientX, y: e.clientY });
+
       // Update active pointers position
       if (activePointers.current.has(e.pointerId)) {
         activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -315,6 +327,42 @@ export function useCanvasInteraction(
       const draggingType = draggingTypeRef.current;
       const isOverDeleteZone = isOverDeleteZoneRef.current;
 
+      if (draggingType === "person") {
+        const personData = draggingPersonDataRef.current;
+        if (personData) {
+          // Check if dropped over a card
+          // We need current cards and transform
+          const currentTransform = transformRef.current;
+
+          setCards((prev) =>
+            prev.map((card) => {
+              // Calculate card boundaries
+              const cardWidth = card.size === "small" ? 224 : 256;
+              const cardHeight = card.size === "small" ? 80 : 256; // approximate min-h for small
+
+              const screenX = card.x * currentTransform.scale + currentTransform.x;
+              const screenY = card.y * currentTransform.scale + currentTransform.y;
+              const screenWidth = cardWidth * currentTransform.scale;
+              const screenHeight = cardHeight * currentTransform.scale;
+
+              if (
+                e.clientX >= screenX &&
+                e.clientX <= screenX + screenWidth &&
+                e.clientY >= screenY &&
+                e.clientY <= screenY + screenHeight
+              ) {
+                return {
+                  ...card,
+                  assignedPerson: personData,
+                  status: "suggested",
+                };
+              }
+              return card;
+            }),
+          );
+        }
+      }
+
       if (draggingId) {
         if (isOverDeleteZone) {
           if (draggingType === "card")
@@ -334,6 +382,7 @@ export function useCanvasInteraction(
 
       setDraggingId(null);
       setDraggingType(null);
+      setDraggingPersonData(null);
       setResizingId(null);
       setResizingSide(null);
       setIsPanning(false);
@@ -445,15 +494,27 @@ export function useCanvasInteraction(
     setOffset(newOffset);
   };
 
+  const handleStartDragPerson = (e: React.PointerEvent, person: Person) => {
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDraggingType("person");
+    setDraggingPersonData(person);
+    setPointerPos({ x: e.clientX, y: e.clientY });
+  };
+
   return {
     draggingId,
     draggingType,
+    draggingPersonData,
+    pointerPos,
     resizingId,
     resizingSide,
     isPanning,
     isOverDeleteZone,
     handleStartDragCard,
     handleStartDragTrack,
+    handleStartDragPerson,
     handleResizeStart,
     handlePointerDown,
     handleWheel,

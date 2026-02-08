@@ -65,7 +65,7 @@ export const CanvasPage = ({
     handleStartDragCard,
     handleStartDragTrack,
     handleResizeStart,
-    handleMouseDown,
+    handlePointerDown,
     handleWheel,
     handleZoom,
     startDragExternal,
@@ -95,9 +95,10 @@ export const CanvasPage = ({
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden relative">
       <main
         ref={canvasRef}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handlePointerDown}
+        onTouchStart={handlePointerDown}
         onWheel={handleWheel}
-        className={`flex-grow relative bg-slate-100 overflow-hidden outline-none ${
+        className={`flex-grow relative bg-slate-100 overflow-hidden outline-none touch-none ${
           toolMode === "pan"
             ? "cursor-grab active:cursor-grabbing"
             : "cursor-default"
@@ -116,6 +117,8 @@ export const CanvasPage = ({
           switchOrg={switchOrg}
           deleteOrg={deleteOrg}
           createNewOrg={createNewOrg}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
         />
 
         <div
@@ -195,18 +198,22 @@ export const CanvasPage = ({
           </div>
         </div>
 
-        <ViewControls viewMode={viewMode} setViewMode={setViewMode} />
+        <div className="hidden md:block">
+          <ViewControls viewMode={viewMode} setViewMode={setViewMode} />
+        </div>
 
-        <ZoomControls
-          scale={transform.scale}
-          onZoomIn={() =>
-            handleZoom(0.1, window.innerWidth / 2, window.innerHeight / 2)
-          }
-          onZoomOut={() =>
-            handleZoom(-0.1, window.innerWidth / 2, window.innerHeight / 2)
-          }
-          onReset={() => setTransform({ x: 0, y: 0, scale: 1 })}
-        />
+        <div className="hidden md:block">
+          <ZoomControls
+            scale={transform.scale}
+            onZoomIn={() =>
+              handleZoom(0.1, window.innerWidth / 2, window.innerHeight / 2)
+            }
+            onZoomOut={() =>
+              handleZoom(-0.1, window.innerWidth / 2, window.innerHeight / 2)
+            }
+            onReset={() => setTransform({ x: 0, y: 0, scale: 1 })}
+          />
+        </div>
 
         <Toolbar
           ref={deleteZoneRef}
@@ -214,11 +221,13 @@ export const CanvasPage = ({
           setToolMode={setToolMode}
           isDragging={!!draggingId}
           isOverDeleteZone={isOverDeleteZone}
+          onResetZoom={() => setTransform({ x: 0, y: 0, scale: 1 })}
+          onToggleLibrary={() => setIsSidebarOpen((prev) => !prev)}
         />
 
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className={`absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30 transition-all duration-300 ${
+          className={`absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30 transition-all duration-300 hidden md:block ${
             isSidebarOpen
               ? "opacity-0 scale-90 pointer-events-none"
               : "opacity-100 scale-100"

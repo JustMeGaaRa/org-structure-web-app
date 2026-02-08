@@ -73,11 +73,17 @@ export const Sidebar = ({
 
   return (
     <div
-      className={`absolute top-6 right-6 bottom-6 flex flex-col z-50 transition-all duration-300 ease-in-out ${
-        isOpen ? "translate-x-0" : "translate-x-[120%] pointer-events-none"
-      }`}
+      className={`absolute z-50 transition-all duration-300 ease-in-out flex flex-col
+        md:top-6 md:right-6 md:bottom-6 md:w-80 md:h-auto md:left-auto
+        bottom-24 left-4 right-4 h-[40%]
+        ${
+          isOpen
+            ? "translate-y-0 md:translate-y-0 md:translate-x-0"
+            : "translate-y-[150%] md:translate-y-0 md:translate-x-[120%] pointer-events-none"
+        }
+      `}
     >
-      <div className="w-80 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl flex flex-col h-full overflow-hidden relative">
+      <div className="w-full md:w-80 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl flex flex-col h-full overflow-hidden relative">
         <button
           onClick={() => onToggle(false)}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all z-10"

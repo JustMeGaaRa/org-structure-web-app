@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, Trash2, Plus } from "lucide-react";
+import { Menu, Trash2, Plus, Briefcase, User } from "lucide-react";
 import type { Org } from "../../types";
 
 interface OrgHeaderProps {
@@ -10,6 +10,8 @@ interface OrgHeaderProps {
   switchOrg: (id: string) => void;
   deleteOrg: (e: React.MouseEvent, id: string) => void;
   createNewOrg: () => void;
+  viewMode: "structure" | "chart";
+  setViewMode: (mode: "structure" | "chart") => void;
 }
 
 export const OrgHeader = ({
@@ -20,36 +22,64 @@ export const OrgHeader = ({
   switchOrg,
   deleteOrg,
   createNewOrg,
+  viewMode,
+  setViewMode,
 }: OrgHeaderProps) => {
   const [isOrgMenuOpen, setIsOrgMenuOpen] = useState(false);
 
   return (
     <div
-      className="absolute top-6 left-6 z-50"
+      className="absolute top-6 left-6 right-6 md:right-auto md:w-auto z-50 pointer-events-none md:pointer-events-auto"
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="relative">
-        <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-200/60 shadow-xl flex items-center gap-3 group">
-          <button
-            onClick={() => setIsOrgMenuOpen(!isOrgMenuOpen)}
-            className={`p-2 rounded-xl transition-colors ${isOrgMenuOpen ? "bg-slate-900 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
-          >
-            <Menu size={18} />
-          </button>
-          <div className="flex flex-col">
-            <input
-              type="text"
-              value={orgName}
-              onChange={(e) => updateOrgName(e.target.value)}
-              className="bg-transparent border-none outline-none text-sm font-bold text-slate-800 p-0 focus:ring-0 w-48"
-              placeholder="Organization Name"
-            />
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-                Organization
-              </span>
-              <div className="w-1 h-1 rounded-full bg-green-500" />
+      <div className="relative pointer-events-auto">
+        <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-200/60 shadow-xl flex items-center justify-between md:justify-start gap-3 group">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsOrgMenuOpen(!isOrgMenuOpen)}
+              className={`p-2 rounded-xl transition-colors ${isOrgMenuOpen ? "bg-slate-900 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+            >
+              <Menu size={18} />
+            </button>
+            <div className="flex flex-col">
+              <input
+                type="text"
+                value={orgName}
+                onChange={(e) => updateOrgName(e.target.value)}
+                className="bg-transparent border-none outline-none text-sm font-bold text-slate-800 p-0 focus:ring-0 w-32 md:w-48"
+                placeholder="Organization Name"
+              />
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                  Organization
+                </span>
+                <div className="w-1 h-1 rounded-full bg-green-500" />
+              </div>
             </div>
+          </div>
+
+          {/* Mobile View Switcher */}
+          <div className="flex items-center gap-1 md:hidden border-l border-slate-200 pl-2">
+            <button
+              onClick={() => setViewMode("structure")}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === "structure"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-400 hover:bg-slate-100"
+              }`}
+            >
+              <Briefcase size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("chart")}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === "chart"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-400 hover:bg-slate-100"
+              }`}
+            >
+              <User size={16} />
+            </button>
           </div>
         </div>
 

@@ -20,6 +20,7 @@ export const RoleCard: FC<{
   onClear: (roleId: string) => void;
   onToggleSize: (roleId: string) => void;
   isOverDeleteZone: boolean;
+  isSelected?: boolean;
   viewMode: "chart" | "structure";
 }> = ({
   roleData,
@@ -30,6 +31,7 @@ export const RoleCard: FC<{
   onClear,
   onToggleSize,
   isOverDeleteZone,
+  isSelected,
   viewMode,
 }) => {
   const [isOver, setIsOver] = useState(false);
@@ -77,8 +79,8 @@ export const RoleCard: FC<{
       className={`absolute ${cardWidth} ${cardHeight} border bg-white p-5 rounded-2xl flex flex-col transition-shadow select-none cursor-grab active:cursor-grabbing ${
         isDragging
           ? `shadow-2xl ring-2 ${isOverDeleteZone ? "ring-red-500 scale-90 opacity-50" : "ring-blue-400"} z-50`
-          : "shadow-sm hover:shadow-md z-40"
-      } ${isOver ? "ring-4 ring-green-400 border-transparent bg-green-50" : "border-slate-200"}`}
+          : `shadow-sm hover:shadow-md z-40 ${isSelected ? "ring-2 ring-blue-500 border-transparent" : ""}`
+      } ${isOver ? "ring-4 ring-green-400 border-transparent bg-green-50" : !isDragging && !isSelected ? "border-slate-200" : ""}`}
       style={{ left: `${x}px`, top: `${y}px`, transformOrigin: "top left" }}
     >
       <div className="flex justify-between items-start mb-2 relative">

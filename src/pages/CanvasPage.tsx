@@ -62,6 +62,7 @@ export const CanvasPage = ({
     resizingId,
     isPanning,
     isOverDeleteZone,
+    selectedIds,
     handleStartDragCard,
     handleStartDragTrack,
     handleResizeStart,
@@ -189,6 +190,7 @@ export const CanvasPage = ({
                 trackData={track}
                 isDragging={draggingId === track.id && draggingType === "track"}
                 isResizing={resizingId === track.id}
+                isSelected={selectedIds.includes(track.id)}
                 onMouseDown={handleStartDragTrack}
                 onResizeStart={handleResizeStart}
                 isOverDeleteZone={
@@ -204,6 +206,7 @@ export const CanvasPage = ({
                 roleData={card}
                 viewMode={viewMode}
                 isDragging={draggingId === card.id && draggingType === "card"}
+                isSelected={selectedIds.includes(card.id)}
                 isOverDeleteZone={
                   isOverDeleteZone &&
                   draggingId === card.id &&

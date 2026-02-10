@@ -22,6 +22,7 @@ export const Track: FC<{
     direction: "top" | "bottom" | "left" | "right",
   ) => void;
   isOverDeleteZone: boolean;
+  isSelected: boolean;
 }> = ({
   trackData,
   isDragging,
@@ -29,6 +30,7 @@ export const Track: FC<{
   onMouseDown,
   onResizeStart,
   isOverDeleteZone,
+  isSelected,
 }) => {
   const { x, y, width, height } = trackData;
 
@@ -45,7 +47,7 @@ export const Track: FC<{
       className={`absolute border-2 border-dashed rounded-2xl transition-shadow group select-none ${
         isDragging
           ? `shadow-xl border-blue-400 bg-blue-50/10 z-20 ${isOverDeleteZone ? "border-red-500 opacity-50" : ""}`
-          : "border-slate-300 bg-transparent z-0 hover:border-slate-400"
+          : `${isSelected ? "border-blue-500 bg-blue-50/5 z-10" : "border-slate-300 bg-transparent z-0 hover:border-slate-400"}`
       }`}
       style={{
         left: `${x}px`,

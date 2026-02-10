@@ -29,6 +29,11 @@ export function useCanvasInteraction(
   const [lastPanPoint, setLastPanPoint] = useState<Point>({ x: 0, y: 0 });
   const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const initialPositionsRef = useRef<Record<string, { x: number; y: number }>>(
+    {},
+  );
+
   // Refs for values accessed in event listeners to avoid re-attaching listeners
   const transformRef = useRef(transform);
   const offsetRef = useRef(offset);
@@ -87,13 +92,28 @@ export function useCanvasInteraction(
   const handleStartDragCard = (e: React.MouseEvent, cardId: string) => {
     if (toolMode !== "select" || e.button !== 0) return;
     e.stopPropagation();
+
+    // Selection Logic
+    let newSelectedIds = selectedIds;
+    if (e.ctrlKey || e.metaKey) {
+      if (selectedIds.includes(cardId)) {
+        newSelectedIds = selectedIds.filter((id) => id !== cardId);
+        // If we deselect, we don't drag
+        setSelectedIds(newSelectedIds);
+        return;
+      } else {
+        newSelectedIds = [...selectedIds, cardId];
+      }
+    } else {
+      if (!selectedIds.includes(cardId)) {
+        newSelectedIds = [cardId];
+      }
+    }
+    setSelectedIds(newSelectedIds);
+
     const card = cards.find((c) => c.id === cardId);
     if (!card) return;
 
-    // We update state AND ref manually just to point of interest, but ref sync effect handles it too.
-    // However, event handlers need up-to-date state ASAP so relying on useEffect sync is tricky if events fire
-    // before effect. But React state updates are batched and effect runs after render.
-    // For drag start, the next mousemove is usually later.
     setDraggingId(cardId);
     setDraggingType("card");
     const newOffset = {
@@ -101,13 +121,47 @@ export function useCanvasInteraction(
       y: e.clientY / transform.scale - card.y,
     };
     setOffset(newOffset);
+
+    // Capture initial positions for all selected cards and tracks for multi-drag
+    const initialPos: Record<string, { x: number; y: number }> = {};
+    cards.forEach((c) => {
+      if (newSelectedIds.includes(c.id)) {
+        initialPos[c.id] = { x: c.x, y: c.y };
+      }
+    });
+    tracks.forEach((t) => {
+      if (newSelectedIds.includes(t.id)) {
+        initialPos[t.id] = { x: t.x, y: t.y };
+      }
+    });
+    initialPositionsRef.current = initialPos;
   };
 
   const handleStartDragTrack = (e: React.MouseEvent, trackId: string) => {
     if (toolMode !== "select" || e.button !== 0) return;
     e.stopPropagation();
+
+    // Selection Logic
+    let newSelectedIds = selectedIds;
+    if (e.ctrlKey || e.metaKey) {
+      if (selectedIds.includes(trackId)) {
+        newSelectedIds = selectedIds.filter((id) => id !== trackId);
+        // If we deselect, we don't drag
+        setSelectedIds(newSelectedIds);
+        return;
+      } else {
+        newSelectedIds = [...selectedIds, trackId];
+      }
+    } else {
+      if (!selectedIds.includes(trackId)) {
+        newSelectedIds = [trackId];
+      }
+    }
+    setSelectedIds(newSelectedIds);
+
     const track = tracks.find((t) => t.id === trackId);
     if (!track) return;
+
     setDraggingId(trackId);
     setDraggingType("track");
     const newOffset = {
@@ -115,6 +169,23 @@ export function useCanvasInteraction(
       y: e.clientY / transform.scale - track.y,
     };
     setOffset(newOffset);
+
+    // Capture initial positions for all selected tracks or cards
+    const initialPos: Record<string, { x: number; y: number }> = {};
+    // We only support multi-dragging TRACKS here if we follow the pattern,
+    // but ideally we support both. For now, let's at least support multiple tracks.
+    tracks.forEach((t) => {
+      if (newSelectedIds.includes(t.id)) {
+        initialPos[t.id] = { x: t.x, y: t.y };
+      }
+    });
+    // Also include cards if we want mixed dragging?
+    cards.forEach((c) => {
+      if (newSelectedIds.includes(c.id)) {
+        initialPos[c.id] = { x: c.x, y: c.y };
+      }
+    });
+    initialPositionsRef.current = initialPos;
   };
 
   const handleResizeStart = (
@@ -253,24 +324,64 @@ export function useCanvasInteraction(
       const draggingType = draggingTypeRef.current;
       const transform = transformRef.current;
 
-      const newX =
+      const newMouseX =
         Math.round((e.clientX / transform.scale - offset.x) / GRID_SIZE) *
         GRID_SIZE;
-      const newY =
+      const newMouseY =
         Math.round((e.clientY / transform.scale - offset.y) / GRID_SIZE) *
         GRID_SIZE;
 
-      if (draggingType === "card") {
+      if (draggingType === "card" || draggingType === "track") {
+        // Multi-drag logic for both types
+        const initialPositions = initialPositionsRef.current;
+        const leaderInitial = initialPositions[draggingId];
+
+        if (!leaderInitial) {
+          // Fallback if something went wrong - single item drag
+          if (draggingType === "card") {
+            setCards((prev) =>
+              prev.map((c) =>
+                c.id === draggingId ? { ...c, x: newMouseX, y: newMouseY } : c,
+              ),
+            );
+          } else {
+            setTracks((prev) =>
+              prev.map((t) =>
+                t.id === draggingId ? { ...t, x: newMouseX, y: newMouseY } : t,
+              ),
+            );
+          }
+          return;
+        }
+
+        const deltaX = newMouseX - leaderInitial.x;
+        const deltaY = newMouseY - leaderInitial.y;
+
+        // Update Cards if involved in selection
         setCards((prev) =>
-          prev.map((c) =>
-            c.id === draggingId ? { ...c, x: newX, y: newY } : c,
-          ),
+          prev.map((c) => {
+            if (initialPositions[c.id]) {
+              return {
+                ...c,
+                x: initialPositions[c.id].x + deltaX,
+                y: initialPositions[c.id].y + deltaY,
+              };
+            }
+            return c;
+          }),
         );
-      } else {
+        // Update Tracks if involved in selection
         setTracks((prev) =>
-          prev.map((t) =>
-            t.id === draggingId ? { ...t, x: newX, y: newY } : t,
-          ),
+          prev.map((t) => {
+            if (initialPositions[t.id]) {
+              return {
+                ...t,
+                x: initialPositions[t.id].x + deltaX,
+                y: initialPositions[t.id].y + deltaY,
+              };
+            }
+            return t;
+          }),
         );
       }
     },
@@ -281,12 +392,21 @@ export function useCanvasInteraction(
     const draggingId = draggingIdRef.current;
     const draggingType = draggingTypeRef.current;
     const isOverDeleteZone = isOverDeleteZoneRef.current;
+    const initialPositions = initialPositionsRef.current;
 
     if (draggingId) {
       if (isOverDeleteZone) {
-        if (draggingType === "card")
-          setCards((prev) => prev.filter((c) => c.id !== draggingId));
-        else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
+        if (draggingType === "card") {
+          // Delete all selected cards that were being dragged
+          const draggedIds = Object.keys(initialPositions);
+          // If draggedIds is empty (e.g. single drag fallback), just delete draggingId
+          if (draggedIds.length > 0) {
+            setCards((prev) => prev.filter((c) => !draggedIds.includes(c.id)));
+            setSelectedIds([]); // Clear selection after delete
+          } else {
+            setCards((prev) => prev.filter((c) => c.id !== draggingId));
+          }
+        } else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
       } else if (draggingType === "track-create") {
         // Remove if too small (< 10x10)
         setTracks((prev) =>
@@ -306,6 +426,7 @@ export function useCanvasInteraction(
     setResizingSide(null);
     setIsPanning(false);
     setIsOverDeleteZone(false);
+    initialPositionsRef.current = {}; // Clear initial positions
 
     // Reset local refs just in case? Not strictly needed as effect will sync nulls
   }, [setCards, setTracks]);
@@ -328,6 +449,11 @@ export function useCanvasInteraction(
       setLastPanPoint(startPoint);
       lastPanPointRef.current = startPoint;
       return;
+    }
+
+    // Clear selection if clicking on background
+    if (toolMode === "select" && e.button === 0) {
+      setSelectedIds([]);
     }
 
     // Track Creation Mode
@@ -388,6 +514,26 @@ export function useCanvasInteraction(
     }
   };
 
+  // Clipboard
+  const clipboardRef = useRef<
+    { type: "card" | "track"; data: Role | TrackData }[]
+  >([]);
+
+  // Refs for current data to access in keydown without dependencies
+  const cardsRef = useRef(cards);
+  const tracksRef = useRef(tracks); // Add tracksRef
+  const selectedIdsRef = useRef(selectedIds);
+
+  useEffect(() => {
+    cardsRef.current = cards;
+  }, [cards]);
+  useEffect(() => {
+    tracksRef.current = tracks; // Sync tracksRef
+  }, [tracks]);
+  useEffect(() => {
+    selectedIdsRef.current = selectedIds;
+  }, [selectedIds]);
+
   const startDragExternal = (
     e: React.MouseEvent,
     id: string,
@@ -404,6 +550,106 @@ export function useCanvasInteraction(
     setOffset(newOffset);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (
+        activeTag === "input" ||
+        activeTag === "textarea" ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Delete (Delete or Backspace)
+      if (e.key === "Delete" || e.key === "Backspace") {
+        const selected = selectedIdsRef.current;
+        if (selected.length > 0) {
+          setCards((prev) => prev.filter((c) => !selected.includes(c.id)));
+          setTracks((prev) => prev.filter((t) => !selected.includes(t.id)));
+          setSelectedIds([]);
+        }
+      }
+
+      // Copy (Ctrl+C or Meta+C)
+      if ((e.ctrlKey || e.metaKey) && e.code === "KeyC") {
+        const selected = selectedIdsRef.current;
+        if (selected.length > 0) {
+          const itemsToCopy: {
+            type: "card" | "track";
+            data: Role | TrackData;
+          }[] = [];
+
+          // Find cards
+          const currentCards = cardsRef.current;
+          currentCards.forEach((c) => {
+            if (selected.includes(c.id)) {
+              itemsToCopy.push({ type: "card", data: c });
+            }
+          });
+
+          // Find tracks
+          const currentTracks = tracksRef.current;
+          currentTracks.forEach((t) => {
+            if (selected.includes(t.id)) {
+              itemsToCopy.push({ type: "track", data: t });
+            }
+          });
+
+          clipboardRef.current = JSON.parse(JSON.stringify(itemsToCopy));
+        }
+      }
+
+      // Paste (Ctrl+V or Meta+V)
+      if ((e.ctrlKey || e.metaKey) && e.code === "KeyV") {
+        const clipboard = clipboardRef.current;
+        if (clipboard.length > 0) {
+          const newCards: Role[] = [];
+          const newTracks: TrackData[] = [];
+          const newSelectedIds: string[] = [];
+
+          clipboard.forEach((item) => {
+            const newId = `${item.type === "track" ? "track-" : ""}${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            // Apply offset
+            const newItem = {
+              ...item.data,
+              id: newId,
+              x: item.data.x + GRID_SIZE,
+              y: item.data.y + GRID_SIZE,
+            };
+
+            // Cast generic Item data to specific and push
+            if (item.type === "card") {
+              newCards.push(newItem as Role);
+            } else {
+              newTracks.push(newItem as TrackData);
+            }
+            newSelectedIds.push(newId);
+          });
+
+          if (newCards.length > 0) setCards((prev) => [...prev, ...newCards]);
+          if (newTracks.length > 0)
+            setTracks((prev) => [...prev, ...newTracks]);
+
+          // Update clipboard with new items for iterative paste
+          // We need to reconstruct the clipboard structure with new items
+          const newClipboard = [
+            ...newCards.map((c) => ({ type: "card" as const, data: c })),
+            ...newTracks.map((t) => ({ type: "track" as const, data: t })),
+          ];
+          clipboardRef.current = newClipboard;
+
+          setSelectedIds(newSelectedIds);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setCards, setTracks]);
+
   return {
     draggingId,
     draggingType,
@@ -411,6 +657,7 @@ export function useCanvasInteraction(
     resizingSide,
     isPanning,
     isOverDeleteZone,
+    selectedIds,
     handleStartDragCard,
     handleStartDragTrack,
     handleResizeStart,

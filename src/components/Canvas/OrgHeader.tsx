@@ -86,7 +86,10 @@ export const OrgHeader = ({
             </div>
             <div className="mt-2 pt-2 border-t border-slate-100">
               <button
-                onClick={createNewOrg}
+                onClick={() => {
+                  createNewOrg();
+                  setIsOrgMenuOpen(false);
+                }}
                 className="w-full flex items-center gap-3 p-3 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all group"
               >
                 <div className="p-1 bg-slate-100 group-hover:bg-blue-100 rounded-lg transition-colors">

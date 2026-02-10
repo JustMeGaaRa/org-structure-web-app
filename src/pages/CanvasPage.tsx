@@ -90,6 +90,61 @@ export const CanvasPage = ({
       ),
     );
   };
+  const handleBackup = () => {
+    const backupData = {
+      version: 1,
+      timestamp: new Date().toISOString(),
+      orgId: currentOrgId,
+      orgName: orgName,
+      cards: cards,
+      tracks: tracks,
+      roleTemplates: roleTemplates,
+      peopleTemplates: peopleTemplates,
+      transform: transform,
+    };
+
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${orgName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_backup.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRestore = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const data = JSON.parse(content);
+
+        // Basic validation
+        if (!data.cards || !data.tracks) {
+          alert("Invalid backup file: Missing cards or tracks data.");
+          return;
+        }
+
+        // Restore data
+        if (data.orgName) updateOrgName(data.orgName);
+        if (data.cards) setCards(data.cards);
+        if (data.tracks) setTracks(data.tracks);
+        if (data.roleTemplates) setRoleTemplates(data.roleTemplates);
+        if (data.peopleTemplates) setPeopleTemplates(data.peopleTemplates);
+        if (data.transform) setTransform(data.transform);
+
+        // alert("Organization restored successfully!");
+      } catch (err) {
+        console.error("Failed to restore backup:", err);
+        alert("Failed to parse backup file.");
+      }
+    };
+    reader.readAsText(file);
+  };
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden relative">
@@ -256,6 +311,8 @@ export const CanvasPage = ({
         }}
         onDeleteRoleTemplate={onDeleteRoleTemplate}
         onDeletePersonTemplate={onDeletePersonTemplate}
+        onBackup={handleBackup}
+        onRestore={handleRestore}
         onRoleDragStart={(e, roleTemplate) => {
           // Create the card
           if (!canvasRef.current) return;

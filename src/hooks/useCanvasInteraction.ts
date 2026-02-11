@@ -10,7 +10,7 @@ export function useCanvasInteraction(
   setTracks: (
     tracks: TrackData[] | ((prev: TrackData[]) => TrackData[]),
   ) => void,
-  toolMode: "select" | "pan" | "track",
+  toolMode: "select" | "pan" | "track" | "record" | "present",
   canvasRef: React.RefObject<HTMLDivElement | null>,
   deleteZoneRef: React.RefObject<HTMLDivElement | null>,
 ) {

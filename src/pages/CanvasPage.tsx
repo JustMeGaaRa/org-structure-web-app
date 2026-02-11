@@ -9,7 +9,21 @@ import { Toolbar } from "../components/Canvas/Toolbar";
 import { Sidebar } from "../components/Sidebar";
 import { useCanvasData } from "../hooks/useCanvasData";
 import { useCanvasInteraction } from "../hooks/useCanvasInteraction";
-import type { Role, Person, Org, RoleTemplate } from "../types";
+import type {
+  Role,
+  Person,
+  Org,
+  RoleTemplate,
+  Transform,
+  TrackData,
+} from "../types";
+
+type HistoryStep = {
+  timestamp: number;
+  cards: Role[];
+  tracks: TrackData[];
+  transform: Transform;
+};
 
 interface CanvasPageProps {
   orgs: Org[];
@@ -46,9 +60,12 @@ export const CanvasPage = ({
 }: CanvasPageProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const deleteZoneRef = useRef<HTMLDivElement>(null);
-  const [toolMode, setToolMode] = useState<"select" | "pan" | "track">(
-    "select",
-  );
+  const [toolMode, setToolMode] = useState<
+    "select" | "pan" | "track" | "record" | "present"
+  >("select");
+  const [historySteps, setHistorySteps] = useState<HistoryStep[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
   const [viewMode, setViewMode] = useState<"structure" | "chart">("chart");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -147,6 +164,61 @@ export const CanvasPage = ({
     reader.readAsText(file);
   };
 
+  const handleCapture = () => {
+    const step = {
+      timestamp: Date.now(),
+      cards,
+      tracks,
+      transform,
+    };
+    setHistorySteps((prev) => [...prev, step]);
+    // Optional: Visual feedback could be added here
+  };
+
+  const restoreStep = (index: number) => {
+    if (index >= 0 && index < historySteps.length) {
+      const step = historySteps[index];
+      if (step.cards) setCards(step.cards);
+      if (step.tracks) setTracks(step.tracks);
+      if (step.transform) setTransform(step.transform);
+    }
+  };
+
+  const handleToolModeChange = (
+    mode: "select" | "pan" | "track" | "record" | "present",
+  ) => {
+    if (mode === "present") {
+      if (historySteps.length > 0) {
+        setCurrentStepIndex(0);
+        restoreStep(0); // Start from first step
+      }
+      setIsSidebarOpen(false); // Close sidebar in present mode
+    }
+
+    setToolMode(mode);
+  };
+
+  const handleResetRecording = () => {
+    setHistorySteps([]);
+    setCurrentStepIndex(0);
+  };
+
+  const handleNextStep = () => {
+    if (currentStepIndex < historySteps.length - 1) {
+      const newIndex = currentStepIndex + 1;
+      setCurrentStepIndex(newIndex);
+      restoreStep(newIndex);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStepIndex > 0) {
+      const newIndex = currentStepIndex - 1;
+      setCurrentStepIndex(newIndex);
+      restoreStep(newIndex);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden relative">
       <main
@@ -164,15 +236,17 @@ export const CanvasPage = ({
           backgroundPosition: `${transform.x}px ${transform.y}px`,
         }}
       >
-        <OrgHeader
-          orgName={orgName}
-          updateOrgName={updateOrgName}
-          orgs={orgs}
-          currentOrgId={currentOrgId}
-          switchOrg={switchOrg}
-          deleteOrg={deleteOrg}
-          createNewOrg={createNewOrg}
-        />
+        {toolMode !== "present" && (
+          <OrgHeader
+            orgName={orgName}
+            updateOrgName={updateOrgName}
+            orgs={orgs}
+            currentOrgId={currentOrgId}
+            switchOrg={switchOrg}
+            deleteOrg={deleteOrg}
+            createNewOrg={createNewOrg}
+          />
+        )}
 
         <div
           className={`absolute inset-0 pointer-events-none ${
@@ -253,41 +327,53 @@ export const CanvasPage = ({
           </div>
         </div>
 
-        <ViewControls viewMode={viewMode} setViewMode={setViewMode} />
+        {toolMode !== "present" && (
+          <ViewControls viewMode={viewMode} setViewMode={setViewMode} />
+        )}
 
-        <ZoomControls
-          scale={transform.scale}
-          onZoomIn={() =>
-            handleZoom(0.1, window.innerWidth / 2, window.innerHeight / 2)
-          }
-          onZoomOut={() =>
-            handleZoom(-0.1, window.innerWidth / 2, window.innerHeight / 2)
-          }
-          onReset={() => setTransform({ x: 0, y: 0, scale: 1 })}
-        />
+        {toolMode !== "present" && (
+          <ZoomControls
+            scale={transform.scale}
+            onZoomIn={() =>
+              handleZoom(0.1, window.innerWidth / 2, window.innerHeight / 2)
+            }
+            onZoomOut={() =>
+              handleZoom(-0.1, window.innerWidth / 2, window.innerHeight / 2)
+            }
+            onReset={() => setTransform({ x: 0, y: 0, scale: 1 })}
+          />
+        )}
 
         <Toolbar
           ref={deleteZoneRef}
           toolMode={toolMode}
-          setToolMode={setToolMode}
+          setToolMode={handleToolModeChange}
           isDragging={!!draggingId}
           isOverDeleteZone={isOverDeleteZone}
+          onCapture={handleCapture}
+          onNextStep={handleNextStep}
+          onPrevStep={handlePrevStep}
+          stepCount={historySteps.length}
+          currentStepIndex={currentStepIndex}
+          onResetRecording={handleResetRecording}
         />
 
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className={`absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30 transition-all duration-300 ${
-            isSidebarOpen
-              ? "opacity-0 scale-90 pointer-events-none"
-              : "opacity-100 scale-100"
-          }`}
-        >
-          <ChevronLeft size={20} className="text-slate-600" />
-        </button>
+        {toolMode !== "present" && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className={`absolute top-6 right-6 p-2 bg-white border border-slate-200 rounded-full shadow-lg hover:bg-slate-50 z-30 transition-all duration-300 ${
+              isSidebarOpen
+                ? "opacity-0 scale-90 pointer-events-none"
+                : "opacity-100 scale-100"
+            }`}
+          >
+            <ChevronLeft size={20} className="text-slate-600" />
+          </button>
+        )}
       </main>
 
       <Sidebar
-        isOpen={isSidebarOpen}
+        isOpen={isSidebarOpen && toolMode !== "present"}
         onToggle={setIsSidebarOpen}
         onNavigateToLibrary={onNavigateToLibrary}
         roleTemplates={roleTemplates}

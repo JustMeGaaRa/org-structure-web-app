@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { FC } from "react";
 import { ResizeHandle } from "./ResizeHandle";
-import { Pencil } from "lucide-react";
+import { Pencil, Ungroup } from "lucide-react";
 import type { TrackData } from "../../types";
 
 /**
@@ -20,6 +20,7 @@ export const Track: FC<{
     direction: "top" | "bottom" | "left" | "right",
   ) => void;
   onNameChange: (id: string, newName: string) => void;
+  onUngroup: (id: string) => void;
   isOverDeleteZone: boolean;
   isSelected: boolean;
   animate?: boolean;
@@ -30,6 +31,7 @@ export const Track: FC<{
   onMouseDown,
   onResizeStart,
   onNameChange,
+  onUngroup,
   isOverDeleteZone,
   isSelected,
   animate = false,
@@ -66,6 +68,11 @@ export const Track: FC<{
     } else {
       setTempName(name || "New Group");
     }
+  };
+
+  const handleUngroup = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent select/drag
+    onUngroup(trackData.id);
   };
 
   return (
@@ -126,6 +133,16 @@ export const Track: FC<{
           </>
         )}
       </div>
+
+      {/* Ungroup Button */}
+      <button
+        onClick={handleUngroup}
+        onMouseDown={(e) => e.stopPropagation()}
+        className="absolute -top-3 right-4 p-1 rounded-md bg-white border border-slate-200 text-slate-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600 hover:border-red-200 z-30"
+        title="Ungroup cards"
+      >
+        <Ungroup size={14} />
+      </button>
 
       <ResizeHandle direction="top" onResizeStart={handleResize} />
       <ResizeHandle direction="bottom" onResizeStart={handleResize} />

@@ -277,6 +277,15 @@ export const CanvasPage = ({
     }
   };
 
+  const handleUngroupTrack = (trackId: string) => {
+    setTracks((prev) => prev.filter((t) => t.id !== trackId));
+    // Also remove from selection if present
+    const isSelected = selectedIds.includes(trackId);
+    if (isSelected) {
+      setSelectedIds((prev) => prev.filter((id) => id !== trackId));
+    }
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden relative">
       <main
@@ -333,6 +342,7 @@ export const CanvasPage = ({
                   onMouseDown={handleStartDragTrack}
                   onResizeStart={handleResizeStart}
                   onNameChange={handleTrackNameChange}
+                  onUngroup={handleUngroupTrack}
                   isOverDeleteZone={
                     isOverDeleteZone &&
                     draggingId === track.id &&

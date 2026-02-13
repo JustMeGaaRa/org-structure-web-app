@@ -91,7 +91,8 @@ export const CanvasPage = ({
     handleMouseDown,
     handleWheel,
     handleZoom,
-    startDragExternal,
+    startDragNewCard,
+    draggedNewCard,
     setSelectedIds,
   } = useCanvasInteraction(
     transform,
@@ -406,6 +407,26 @@ export const CanvasPage = ({
                 />
               ))}
             </AnimatePresence>
+            {draggedNewCard && (
+              <RoleCard
+                key={draggedNewCard.id}
+                roleData={draggedNewCard}
+                viewMode={viewMode}
+                isDragging={true}
+                isSelected={true}
+                isOverDeleteZone={
+                  isOverDeleteZone &&
+                  draggingId === draggedNewCard.id &&
+                  draggingType === "new-card"
+                }
+                onMouseDown={() => {}}
+                onPersonDrop={() => {}}
+                onApprove={() => {}}
+                onClear={() => {}}
+                onToggleSize={() => {}}
+                animate={false}
+              />
+            )}
           </div>
         </div>
 
@@ -506,9 +527,7 @@ export const CanvasPage = ({
             size: "large",
           };
 
-          setCards((prev) => [...prev, newCard]);
-
-          startDragExternal(e, id, "card", initialX, initialY);
+          startDragNewCard(e, newCard);
         }}
       />
     </div>

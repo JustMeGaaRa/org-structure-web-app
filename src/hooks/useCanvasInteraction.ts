@@ -19,8 +19,9 @@ export function useCanvasInteraction(
 ) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingType, setDraggingType] = useState<
-    "card" | "track" | "track-create" | null
+    "card" | "track" | "track-create" | "new-card" | null
   >(null);
+  const [draggedNewCard, setDraggedNewCard] = useState<Role | null>(null);
   const [resizingId, setResizingId] = useState<string | null>(null);
   const [resizingSide, setResizingSide] = useState<
     "top" | "bottom" | "left" | "right" | null
@@ -48,9 +49,8 @@ export function useCanvasInteraction(
   const cardsRef = useRef(cards);
   const tracksRef = useRef(tracks);
   const selectedIdsRef = useRef(selectedIds);
-  const clipboardRef = useRef<
-    { type: "card" | "track"; data: Role | TrackData }[]
-  >([]);
+  const clipboardRef = useRef<{ type: "card" | "track"; data: Role | TrackData }[]>([]);
+  const draggedNewCardRef = useRef(draggedNewCard);
 
   // Sync refs
   useEffect(() => {
@@ -89,6 +89,9 @@ export function useCanvasInteraction(
   useEffect(() => {
     selectedIdsRef.current = selectedIds;
   }, [selectedIds]);
+  useEffect(() => {
+    draggedNewCardRef.current = draggedNewCard;
+  }, [draggedNewCard]);
 
   // Zoom Logic
   const handleZoom = useCallback(
@@ -310,6 +313,25 @@ export function useCanvasInteraction(
         Math.round((e.clientY / transform.scale - offset.y) / GRID_SIZE) *
         GRID_SIZE;
 
+      if (draggingType === "new-card") {
+        const draggedNewCard = draggedNewCardRef.current;
+        if (draggedNewCard) {
+          const newMouseX =
+            Math.round((e.clientX / transform.scale - offset.x) / GRID_SIZE) *
+            GRID_SIZE;
+          const newMouseY =
+            Math.round((e.clientY / transform.scale - offset.y) / GRID_SIZE) *
+            GRID_SIZE;
+
+          setDraggedNewCard({
+            ...draggedNewCard,
+            x: newMouseX,
+            y: newMouseY,
+          });
+        }
+        return;
+      }
+
       if (draggingType === "card" || draggingType === "track") {
         // Multi-drag logic for both types
         const initialPositions = initialPositionsRef.current;
@@ -436,7 +458,13 @@ export function useCanvasInteraction(
           }
         } else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
       } else if (draggingType === "track-create") {
-        // logic removed
+         // logic removed
+      } else if (draggingType === "new-card") {
+        const draggedNewCard = draggedNewCardRef.current;
+        if (draggedNewCard && !isOverDeleteZone) {
+          setCards((prev) => [...prev, draggedNewCard]);
+        }
+        setDraggedNewCard(null);
       }
     }
 
@@ -502,20 +530,24 @@ export function useCanvasInteraction(
     }
   };
 
-  const startDragExternal = (
+
+
+  const startDragNewCard = (
     e: React.MouseEvent,
-    id: string,
-    type: "card" | "track",
-    initialX: number,
-    initialY: number,
+    newCard: Role,
   ) => {
-    setDraggingId(id);
-    setDraggingType(type);
-    const newOffset = {
-      x: e.clientX / transform.scale - initialX,
-      y: e.clientY / transform.scale - initialY,
-    };
-    setOffset(newOffset);
+    setDraggingId(newCard.id);
+    setDraggingType("new-card");
+    setDraggedNewCard(newCard);
+
+    // Mouse position in canvas space
+    const mouseX = e.clientX / transform.scale;
+    const mouseY = e.clientY / transform.scale;
+
+    setOffset({
+      x: mouseX - newCard.x,
+      y: mouseY - newCard.y,
+    });
   };
 
   useEffect(() => {
@@ -632,7 +664,8 @@ export function useCanvasInteraction(
     handleMouseDown,
     handleWheel,
     handleZoom,
-    startDragExternal,
+    startDragNewCard,
+    draggedNewCard,
     setSelectedIds,
   };
 }

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { FC } from "react";
+import { ResizeHandle } from "./ResizeHandle";
 import { Pencil, Ungroup } from "lucide-react";
 import type { TrackData } from "../../types";
 
@@ -28,6 +29,7 @@ export const Track: FC<{
   isDragging,
   isResizing,
   onMouseDown,
+  onResizeStart,
   onNameChange,
   onUngroup,
   isOverDeleteZone,
@@ -45,6 +47,13 @@ export const Track: FC<{
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  const handleResize = (
+    e: React.MouseEvent<HTMLDivElement>,
+    direction: "top" | "bottom" | "left" | "right",
+  ) => {
+    onResizeStart(e, trackData.id, direction);
+  };
 
   const handleStartEditing = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -138,6 +147,11 @@ export const Track: FC<{
       >
         <Ungroup size={14} />
       </button>
+
+      <ResizeHandle direction="top" onResizeStart={handleResize} />
+      <ResizeHandle direction="bottom" onResizeStart={handleResize} />
+      <ResizeHandle direction="left" onResizeStart={handleResize} />
+      <ResizeHandle direction="right" onResizeStart={handleResize} />
     </motion.div>
   );
 };

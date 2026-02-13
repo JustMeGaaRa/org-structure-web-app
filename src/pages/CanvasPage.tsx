@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 import { Track } from "../components/Track/Track";
 import { RoleCard } from "../components/RoleCard/RoleCard";
@@ -319,75 +320,81 @@ export const CanvasPage = ({
           }}
         >
           <div className="relative w-full h-full pointer-events-auto">
-            {tracks.map((track) => (
-              <Track
-                key={track.id}
-                trackData={track}
-                isDragging={draggingId === track.id && draggingType === "track"}
-                isResizing={resizingId === track.id}
-                isSelected={selectedIds.includes(track.id)}
-                onMouseDown={handleStartDragTrack}
-                onResizeStart={handleResizeStart}
-                onNameChange={handleTrackNameChange}
-                isOverDeleteZone={
-                  isOverDeleteZone &&
-                  draggingId === track.id &&
-                  draggingType === "track"
-                }
-                animate={toolMode === "present"}
-              />
-            ))}
-            {cards.map((card) => (
-              <RoleCard
-                key={card.id}
-                roleData={card}
-                viewMode={viewMode}
-                isDragging={draggingId === card.id && draggingType === "card"}
-                isSelected={selectedIds.includes(card.id)}
-                isOverDeleteZone={
-                  isOverDeleteZone &&
-                  draggingId === card.id &&
-                  draggingType === "card"
-                }
-                onMouseDown={(e: React.MouseEvent<HTMLDivElement>) =>
-                  handleStartDragCard(e, card.id)
-                }
-                onPersonDrop={(
-                  rid: string,
-                  p: { id: string; name: string; imageUrl: string },
-                ) =>
-                  setCards((prev) =>
-                    prev.map((c) =>
-                      c.id === rid
-                        ? { ...c, assignedPerson: p, status: "suggested" }
-                        : c,
-                    ),
-                  )
-                }
-                onApprove={(rid: string) =>
-                  setCards((prev) =>
-                    prev.map((c) =>
-                      c.id === rid ? { ...c, status: "assigned" } : c,
-                    ),
-                  )
-                }
-                onClear={(rid: string) =>
-                  setCards((prev) =>
-                    prev.map((c) =>
-                      c.id === rid
-                        ? {
-                            ...c,
-                            status: "unassigned",
-                            assignedPerson: undefined,
-                          }
-                        : c,
-                    ),
-                  )
-                }
-                onToggleSize={toggleCardSize}
-                animate={toolMode === "present"}
-              />
-            ))}
+            <AnimatePresence>
+              {tracks.map((track) => (
+                <Track
+                  key={track.id}
+                  trackData={track}
+                  isDragging={
+                    draggingId === track.id && draggingType === "track"
+                  }
+                  isResizing={resizingId === track.id}
+                  isSelected={selectedIds.includes(track.id)}
+                  onMouseDown={handleStartDragTrack}
+                  onResizeStart={handleResizeStart}
+                  onNameChange={handleTrackNameChange}
+                  isOverDeleteZone={
+                    isOverDeleteZone &&
+                    draggingId === track.id &&
+                    draggingType === "track"
+                  }
+                  animate={toolMode === "present"}
+                />
+              ))}
+            </AnimatePresence>
+            <AnimatePresence>
+              {cards.map((card) => (
+                <RoleCard
+                  key={card.id}
+                  roleData={card}
+                  viewMode={viewMode}
+                  isDragging={draggingId === card.id && draggingType === "card"}
+                  isSelected={selectedIds.includes(card.id)}
+                  isOverDeleteZone={
+                    isOverDeleteZone &&
+                    draggingId === card.id &&
+                    draggingType === "card"
+                  }
+                  onMouseDown={(e: React.MouseEvent<HTMLDivElement>) =>
+                    handleStartDragCard(e, card.id)
+                  }
+                  onPersonDrop={(
+                    rid: string,
+                    p: { id: string; name: string; imageUrl: string },
+                  ) =>
+                    setCards((prev) =>
+                      prev.map((c) =>
+                        c.id === rid
+                          ? { ...c, assignedPerson: p, status: "suggested" }
+                          : c,
+                      ),
+                    )
+                  }
+                  onApprove={(rid: string) =>
+                    setCards((prev) =>
+                      prev.map((c) =>
+                        c.id === rid ? { ...c, status: "assigned" } : c,
+                      ),
+                    )
+                  }
+                  onClear={(rid: string) =>
+                    setCards((prev) =>
+                      prev.map((c) =>
+                        c.id === rid
+                          ? {
+                              ...c,
+                              status: "unassigned",
+                              assignedPerson: undefined,
+                            }
+                          : c,
+                      ),
+                    )
+                  }
+                  onToggleSize={toggleCardSize}
+                  animate={toolMode === "present"}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         </div>
 

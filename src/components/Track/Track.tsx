@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import type { FC } from "react";
 import { ResizeHandle } from "./ResizeHandle";
 import { Pencil } from "lucide-react";
@@ -68,7 +69,12 @@ export const Track: FC<{
   };
 
   return (
-    <div
+    <motion.div
+      // Remove layout={animate}
+      initial={animate ? { opacity: 0, scale: 0.9 } : false}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={animate ? { opacity: 0, scale: 0.9 } : undefined}
+      transition={{ duration: 0.3 }}
       onMouseDown={(e) => onMouseDown(e, trackData.id)}
       className={`absolute border-2 border-dashed rounded-2xl group select-none ${
         animate
@@ -125,6 +131,6 @@ export const Track: FC<{
       <ResizeHandle direction="bottom" onResizeStart={handleResize} />
       <ResizeHandle direction="left" onResizeStart={handleResize} />
       <ResizeHandle direction="right" onResizeStart={handleResize} />
-    </div>
+    </motion.div>
   );
 };

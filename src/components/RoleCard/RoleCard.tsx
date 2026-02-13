@@ -4,6 +4,7 @@ import { RoleStatus } from "./RoleStatus";
 import { RoleAvatar } from "./RoleAvatar";
 import { RoleInfo } from "./RoleInfo";
 import { RoleMenu } from "./RoleMenu";
+import { motion } from "framer-motion";
 
 /**
  * RoleCard Component
@@ -73,7 +74,12 @@ export const RoleCard: FC<{
   const cardHeight = isSmall ? "h-auto min-h-[80px]" : "h-64";
 
   return (
-    <div
+    <motion.div
+      // Remove layout={animate} to allow CSS transitions for top/left
+      initial={animate ? { opacity: 0, scale: 0.8 } : false}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={animate ? { opacity: 0, scale: 0.8 } : undefined}
+      transition={{ duration: 0.3 }}
       onMouseDown={onMouseDown}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -116,6 +122,6 @@ export const RoleCard: FC<{
         summary={summary}
         assignedPerson={assignedPerson}
       />
-    </div>
+    </motion.div>
   );
 };

@@ -19,7 +19,8 @@ import type {
   TrackData,
 } from "../types";
 
-const TRACK_PADDING = 20;
+const GRID_SIZE = 16;
+const TRACK_PADDING = 16;
 
 type HistoryStep = {
   timestamp: number;
@@ -299,7 +300,7 @@ export const CanvasPage = ({
         }`}
         style={{
           backgroundImage: `radial-gradient(#cbd5e1 ${1.5 * transform.scale}px, transparent ${1.5 * transform.scale}px)`,
-          backgroundSize: `${20 * transform.scale}px ${20 * transform.scale}px`,
+          backgroundSize: `${GRID_SIZE * transform.scale}px ${GRID_SIZE * transform.scale}px`,
           backgroundPosition: `${transform.x}px ${transform.y}px`,
         }}
       >

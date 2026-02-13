@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { FC } from "react";
-import { ResizeHandle } from "./ResizeHandle";
 import { Pencil, Ungroup } from "lucide-react";
 import type { TrackData } from "../../types";
 
@@ -29,7 +28,6 @@ export const Track: FC<{
   isDragging,
   isResizing,
   onMouseDown,
-  onResizeStart,
   onNameChange,
   onUngroup,
   isOverDeleteZone,
@@ -47,13 +45,6 @@ export const Track: FC<{
       inputRef.current.select();
     }
   }, [isEditing]);
-
-  const handleResize = (
-    e: React.MouseEvent<HTMLDivElement>,
-    direction: "top" | "bottom" | "left" | "right",
-  ) => {
-    onResizeStart(e, trackData.id, direction);
-  };
 
   const handleStartEditing = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -102,10 +93,10 @@ export const Track: FC<{
     >
       {/* Label */}
       <div
-        className={`absolute -top-3 left-4 px-2 py-0.5 rounded-md text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm border z-30 ${
+        className={`absolute bottom-full left-4 px-3 py-1 rounded-t-lg rounded-b-none text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm border-x border-t border-b-0 z-30 ${
           isSelected
             ? "bg-blue-500 text-white border-blue-500"
-            : "bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+            : "bg-slate-300 text-slate-700 border-slate-300 hover:bg-slate-400 hover:border-slate-400"
         }`}
         onClick={handleStartEditing}
         onMouseDown={(e) => e.stopPropagation()}
@@ -120,7 +111,7 @@ export const Track: FC<{
               if (e.key === "Enter") handleNameSave();
               e.stopPropagation();
             }}
-            className={`bg-transparent outline-none min-w-[60px] text-center ${isSelected ? "text-white placeholder-blue-200" : "text-slate-700"}`}
+            className={`bg-transparent outline-none min-w-[60px] text-center ${isSelected ? "text-white placeholder-blue-200" : "text-slate-900"}`}
             style={{ width: `${Math.max(tempName.length * 8, 60)}px` }}
           />
         ) : (
@@ -128,7 +119,7 @@ export const Track: FC<{
             {name || "Group"}
             <Pencil
               size={10}
-              className={`opacity-0 group-hover:opacity-100 transition-opacity ${isSelected ? "text-white" : "text-slate-400"}`}
+              className={`opacity-0 group-hover:opacity-100 transition-opacity ${isSelected ? "text-white" : "text-slate-500"}`}
             />
           </>
         )}
@@ -138,16 +129,15 @@ export const Track: FC<{
       <button
         onClick={handleUngroup}
         onMouseDown={(e) => e.stopPropagation()}
-        className="absolute -top-3 right-4 p-1 rounded-md bg-white border border-slate-200 text-slate-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600 hover:border-red-200 z-30"
+        className={`absolute bottom-full right-4 p-1 rounded-t-md rounded-b-none shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-30 border-x border-t border-b-0 ${
+          isSelected
+            ? "bg-blue-500 text-white border-blue-500 hover:bg-red-500 hover:border-red-500"
+            : "bg-slate-300 text-slate-700 border-slate-300 hover:bg-red-100 hover:text-red-700 hover:border-red-200"
+        }`}
         title="Ungroup cards"
       >
         <Ungroup size={14} />
       </button>
-
-      <ResizeHandle direction="top" onResizeStart={handleResize} />
-      <ResizeHandle direction="bottom" onResizeStart={handleResize} />
-      <ResizeHandle direction="left" onResizeStart={handleResize} />
-      <ResizeHandle direction="right" onResizeStart={handleResize} />
     </motion.div>
   );
 };

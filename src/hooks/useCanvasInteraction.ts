@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { Role, TrackData, Transform, Point } from "../types";
 
-const GRID_SIZE = 20;
+const GRID_SIZE = 16;
+const TRACK_PADDING = 16;
 
 export function useCanvasInteraction(
   transform: Transform,
@@ -47,7 +48,9 @@ export function useCanvasInteraction(
   const cardsRef = useRef(cards);
   const tracksRef = useRef(tracks);
   const selectedIdsRef = useRef(selectedIds);
-  const clipboardRef = useRef<{ type: "card" | "track"; data: Role | TrackData }[]>([]);
+  const clipboardRef = useRef<
+    { type: "card" | "track"; data: Role | TrackData }[]
+  >([]);
 
   // Sync refs
   useEffect(() => {
@@ -241,7 +244,6 @@ export function useCanvasInteraction(
 
       // Handle Track Creation REMOVED
 
-
       const resizingId = resizingIdRef.current;
 
       // Handle Resizing
@@ -343,71 +345,71 @@ export function useCanvasInteraction(
         // Tracks are updated if:
         // a) They are being dragged explicitly (in initialPositions) AND have no contained cards (legacy/empty tracks)
         // b) They have contained cards (dynamic), in which case we RECALCULATE from nextCards
-        
+
         setTracks((prevTracks) => {
-           return prevTracks.map(t => {
-               // Dynamic resizing Track
-               if (t.containedCardIds && t.containedCardIds.length > 0) {
-                   const contained = nextCards.filter(c => t.containedCardIds!.includes(c.id));
-                   if (contained.length === 0) return t; // Should not happen usually
+          return prevTracks.map((t) => {
+            // Dynamic resizing Track
+            if (t.containedCardIds && t.containedCardIds.length > 0) {
+              const contained = nextCards.filter((c) =>
+                t.containedCardIds!.includes(c.id),
+              );
+              if (contained.length === 0) return t; // Should not happen usually
 
-                   // Calculate bounds
-                   const minX = Math.min(...contained.map(c => c.x));
-                   const minY = Math.min(...contained.map(c => c.y));
+              // Calculate bounds
+              const minX = Math.min(...contained.map((c) => c.x));
+              const minY = Math.min(...contained.map((c) => c.y));
 
-                   // Wait, Card Size?
-                   // RoleCard width/height: w-64 (256px) or w-full.
-                   // We need to know the card size. 
-                   // Cards state has `size` property ("small" or "large").
-                   // Small: h-24 (96px)? Large: h-64 (256px)?
-                   // Width is usually fixed w-64 (256px).
-                   // Let's assume standard width 280px (w-72 in some designs) or 256 (w-64).
-                   // Check RoleCard implementation ideally.
-                   // For now, let's look at `RoleCard.tsx` later, but assume 250x150 roughly.
-                   // Or better, let's use a safe bounding box.
-                   // Actually, if we use the same size constants as used in rendering, that's best.
-                   // Let's assume w=260, h depends on size.
-                   
-                   // For now, let's use:
-                   // Width: 256 (w-64)
-                   // Height: Small=100, Large=300? 
-                   // This is risky without exact dimensions.
-                   // But "size should match total area... with additional constant padding".
-                   
-                   // Let's use simplified logic for now: 256 width, and let's say 120/400 height?
-                   // We will refine constants if needed.
-                   
-                   let maxRight = -Infinity;
-                   let maxBottom = -Infinity;
-                   
-                   contained.forEach((c) => {
-                     const cW = c.size === "small" ? 224 : 256;
-                     const cH = c.size === "small" ? 120 : 256;
-                     maxRight = Math.max(maxRight, c.x + cW);
-                     maxBottom = Math.max(maxBottom, c.y + cH);
-                   });
-                   
-                   const PADDING = 40;
-                   return {
-                       ...t,
-                       x: minX - PADDING,
-                       y: minY - PADDING,
-                       width: (maxRight - minX) + (PADDING * 2),
-                       height: (maxBottom - minY) + (PADDING * 2)
-                   };
-               }
-               
-               // Existing Manual Drag Logic (for tracks without children)
-               if (initialPositions[t.id]) {
-                 return {
-                   ...t,
-                   x: initialPositions[t.id].x + deltaX,
-                   y: initialPositions[t.id].y + deltaY,
-                 };
-               }
-               
-               return t;
-           });
+              // Wait, Card Size?
+              // RoleCard width/height: w-64 (256px) or w-full.
+              // We need to know the card size.
+              // Cards state has `size` property ("small" or "large").
+              // Small: h-24 (96px)? Large: h-64 (256px)?
+              // Width is usually fixed w-64 (256px).
+              // Let's assume standard width 280px (w-72 in some designs) or 256 (w-64).
+              // Check RoleCard implementation ideally.
+              // For now, let's look at `RoleCard.tsx` later, but assume 250x150 roughly.
+              // Or better, let's use a safe bounding box.
+              // Actually, if we use the same size constants as used in rendering, that's best.
+              // Let's assume w=260, h depends on size.
+
+              // For now, let's use:
+              // Width: 256 (w-64)
+              // Height: Small=100, Large=300?
+              // This is risky without exact dimensions.
+              // But "size should match total area... with additional constant padding".
+
+              // Let's use simplified logic for now: 256 width, and let's say 120/400 height?
+              // We will refine constants if needed.
+
+              let maxRight = -Infinity;
+              let maxBottom = -Infinity;
+
+              contained.forEach((c) => {
+                const cW = c.size === "small" ? 224 : 256;
+                const cH = c.size === "small" ? 120 : 256;
+                maxRight = Math.max(maxRight, c.x + cW);
+                maxBottom = Math.max(maxBottom, c.y + cH);
+              });
+              return {
+                ...t,
+                x: minX - TRACK_PADDING,
+                y: minY - TRACK_PADDING,
+                width: maxRight - minX + TRACK_PADDING * 2,
+                height: maxBottom - minY + TRACK_PADDING * 2,
+              };
+            }
+
+            // Existing Manual Drag Logic (for tracks without children)
+            if (initialPositions[t.id]) {
+              return {
+                ...t,
+                x: initialPositions[t.id].x + deltaX,
+                y: initialPositions[t.id].y + deltaY,
+              };
+            }
+
+            return t;
+          });
         });
       }
     },
@@ -434,7 +436,7 @@ export function useCanvasInteraction(
           }
         } else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
       } else if (draggingType === "track-create") {
-         // logic removed
+        // logic removed
       }
     }
 
@@ -476,8 +478,8 @@ export function useCanvasInteraction(
 
     // Track Creation Mode REMOVED (now handled by grouping action)
     if (toolMode === "track") {
-        // No-op or allow selection?
-        // Maybe deselect?
+      // No-op or allow selection?
+      // Maybe deselect?
     }
   };
 
@@ -499,8 +501,6 @@ export function useCanvasInteraction(
       }));
     }
   };
-
-
 
   const startDragExternal = (
     e: React.MouseEvent,

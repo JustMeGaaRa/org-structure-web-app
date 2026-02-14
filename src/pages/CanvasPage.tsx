@@ -7,13 +7,13 @@ import { OrgHeader } from "../components/Canvas/OrgHeader";
 import { ZoomControls } from "../components/Canvas/ZoomControls";
 import { ViewControls } from "../components/Canvas/ViewControls";
 import { Toolbar } from "../components/Canvas/Toolbar";
-import { Sidebar } from "../components/Sidebar";
+import { LibraryPanel } from "../components/Sidebar";
 import { useCanvasData } from "../hooks/useCanvasData";
 import { useCanvasInteraction } from "../hooks/useCanvasInteraction";
-import type { Role, Person, Org, RoleTemplate, TrackData } from "../types";
-
-const GRID_SIZE = 16;
-const TRACK_PADDING = 16;
+import { useBackupRestore } from "../hooks/useBackupRestore";
+import { useGroupLogic } from "../hooks/useGroupLogic";
+import type { Role, Person, Org, RoleTemplate } from "../types";
+import { GRID_SIZE } from "../constants";
 
 interface CanvasPageProps {
   orgs: Org[];
@@ -99,6 +99,32 @@ export const CanvasPage = ({
     deleteZoneRef,
   );
 
+  const { handleBackup, handleRestore } = useBackupRestore({
+    currentOrgId,
+    orgName,
+    cards,
+    tracks,
+    roleTemplates,
+    peopleTemplates,
+    transform,
+    historySteps,
+    setCards,
+    setTracks,
+    setRoleTemplates,
+    setPeopleTemplates,
+    setTransform,
+    setHistorySteps,
+    updateOrgName,
+  });
+
+  const { createGroup } = useGroupLogic({
+    cards,
+    selectedIds,
+    setTracks,
+    setSelectedIds,
+    setToolMode,
+  });
+
   const toggleCardSize = (cardId: string) => {
     setCards((prev) =>
       prev.map((c) =>
@@ -108,68 +134,11 @@ export const CanvasPage = ({
       ),
     );
   };
-  const handleBackup = () => {
-    const backupData = {
-      version: 1,
-      timestamp: new Date().toISOString(),
-      orgId: currentOrgId,
-      orgName: orgName,
-      cards: cards,
-      tracks: tracks,
-      roleTemplates: roleTemplates,
-      peopleTemplates: peopleTemplates,
-      transform: transform,
-      historySteps: historySteps,
-    };
-
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${orgName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_backup.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const handleTrackNameChange = (id: string, newName: string) => {
     setTracks((prev) =>
       prev.map((t) => (t.id === id ? { ...t, name: newName } : t)),
     );
-  };
-
-  const handleRestore = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        const data = JSON.parse(content);
-
-        // Basic validation
-        if (!data.cards || !data.tracks) {
-          alert("Invalid backup file: Missing cards or tracks data.");
-          return;
-        }
-
-        // Restore data
-        if (data.orgName) updateOrgName(data.orgName);
-        if (data.cards) setCards(data.cards);
-        if (data.tracks) setTracks(data.tracks);
-        if (data.roleTemplates) setRoleTemplates(data.roleTemplates);
-        if (data.peopleTemplates) setPeopleTemplates(data.peopleTemplates);
-        if (data.transform) setTransform(data.transform);
-        if (data.historySteps) setHistorySteps(data.historySteps);
-
-        // alert("Organization restored successfully!");
-      } catch (err) {
-        console.error("Failed to restore backup:", err);
-        alert("Failed to parse backup file.");
-      }
-    };
-    reader.readAsText(file);
   };
 
   const handleCapture = () => {
@@ -196,49 +165,7 @@ export const CanvasPage = ({
     mode: "select" | "pan" | "track" | "record" | "present",
   ) => {
     if (mode === "track") {
-      const selectedCards = cards.filter((c) => selectedIds.includes(c.id));
-      if (selectedCards.length > 0) {
-        // Group Logic
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxRight = -Infinity;
-        let maxBottom = -Infinity;
-
-        // Constants used for calculation (Must be consistent with rendering)
-        const CARD_WIDTH_LARGE = 256; // w-64
-        const CARD_WIDTH_SMALL = 224; // w-56
-        const CARD_HEIGHT_LARGE = 256; // h-64
-        const CARD_HEIGHT_SMALL = 120; // Approx based on content
-
-        selectedCards.forEach((c) => {
-          minX = Math.min(minX, c.x);
-          minY = Math.min(minY, c.y);
-          maxRight = Math.max(
-            maxRight,
-            c.x + (c.size === "small" ? CARD_WIDTH_SMALL : CARD_WIDTH_LARGE),
-          );
-          maxBottom = Math.max(
-            maxBottom,
-            c.y + (c.size === "small" ? CARD_HEIGHT_SMALL : CARD_HEIGHT_LARGE),
-          );
-        });
-        const newTrack: TrackData = {
-          id: `track-${Date.now()}`,
-          x: minX - TRACK_PADDING,
-          y: minY - TRACK_PADDING,
-          width: maxRight - minX + TRACK_PADDING * 2,
-          height: maxBottom - minY + TRACK_PADDING * 2,
-          containedCardIds: selectedCards.map((c) => c.id),
-          name: "Group",
-        };
-
-        setTracks((prev) => [...prev, newTrack]);
-        setSelectedIds([newTrack.id]);
-        setToolMode("select");
-      } else {
-        alert("Please select cards to create a group.");
-        setToolMode("select");
-      }
+      createGroup();
       return;
     }
 
@@ -353,7 +280,7 @@ export const CanvasPage = ({
                   onResizeStart={handleResizeStart}
                   onNameChange={handleTrackNameChange}
                   onUngroup={handleUngroupTrack}
-                  isOverDeleteZone={
+                  isDanger={
                     isOverDeleteZone &&
                     draggingId === track.id &&
                     draggingType === "track"
@@ -367,10 +294,10 @@ export const CanvasPage = ({
                 <RoleCard
                   key={card.id}
                   roleData={card}
-                  viewMode={viewMode}
+                  variant={viewMode === "chart" ? "detailed" : "simple"}
                   isDragging={draggingId === card.id && draggingType === "card"}
                   isSelected={selectedIds.includes(card.id)}
-                  isOverDeleteZone={
+                  isDanger={
                     isOverDeleteZone &&
                     draggingId === card.id &&
                     draggingType === "card"
@@ -419,10 +346,10 @@ export const CanvasPage = ({
               <RoleCard
                 key={draggedNewCard.id}
                 roleData={draggedNewCard}
-                viewMode={viewMode}
+                variant={viewMode === "chart" ? "detailed" : "simple"}
                 isDragging={true}
                 isSelected={true}
-                isOverDeleteZone={
+                isDanger={
                   isOverDeleteZone &&
                   draggingId === draggedNewCard.id &&
                   draggingType === "new-card"
@@ -483,7 +410,7 @@ export const CanvasPage = ({
         )}
       </main>
 
-      <Sidebar
+      <LibraryPanel
         isOpen={isSidebarOpen && toolMode !== "present"}
         onToggle={setIsSidebarOpen}
         onNavigateToLibrary={onNavigateToLibrary}

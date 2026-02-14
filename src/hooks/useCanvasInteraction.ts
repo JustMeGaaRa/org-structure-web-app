@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { Role, TrackData, Transform, Point } from "../types";
-
-const GRID_SIZE = 16;
-const TRACK_PADDING = 16;
+import {
+  GRID_SIZE,
+  TRACK_PADDING,
+  CARD_WIDTH_LARGE,
+  CARD_WIDTH_SMALL,
+  CARD_HEIGHT_LARGE,
+  CARD_HEIGHT_SMALL,
+} from "../constants";
 
 export function useCanvasInteraction(
   transform: Transform,
@@ -49,7 +54,9 @@ export function useCanvasInteraction(
   const cardsRef = useRef(cards);
   const tracksRef = useRef(tracks);
   const selectedIdsRef = useRef(selectedIds);
-  const clipboardRef = useRef<{ type: "card" | "track"; data: Role | TrackData }[]>([]);
+  const clipboardRef = useRef<
+    { type: "card" | "track"; data: Role | TrackData }[]
+  >([]);
   const draggedNewCardRef = useRef(draggedNewCard);
 
   // Sync refs
@@ -407,8 +414,10 @@ export function useCanvasInteraction(
               let maxBottom = -Infinity;
 
               contained.forEach((c) => {
-                const cW = c.size === "small" ? 224 : 256;
-                const cH = c.size === "small" ? 120 : 256;
+                const cW =
+                  c.size === "small" ? CARD_WIDTH_SMALL : CARD_WIDTH_LARGE;
+                const cH =
+                  c.size === "small" ? CARD_HEIGHT_SMALL : CARD_HEIGHT_LARGE;
                 maxRight = Math.max(maxRight, c.x + cW);
                 maxBottom = Math.max(maxBottom, c.y + cH);
               });
@@ -458,7 +467,7 @@ export function useCanvasInteraction(
           }
         } else setTracks((prev) => prev.filter((t) => t.id !== draggingId));
       } else if (draggingType === "track-create") {
-         // logic removed
+        // logic removed
       } else if (draggingType === "new-card") {
         const draggedNewCard = draggedNewCardRef.current;
         if (draggedNewCard && !isOverDeleteZone) {
@@ -530,12 +539,7 @@ export function useCanvasInteraction(
     }
   };
 
-
-
-  const startDragNewCard = (
-    e: React.MouseEvent,
-    newCard: Role,
-  ) => {
+  const startDragNewCard = (e: React.MouseEvent, newCard: Role) => {
     setDraggingId(newCard.id);
     setDraggingType("new-card");
     setDraggedNewCard(newCard);

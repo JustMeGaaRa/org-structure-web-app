@@ -2,17 +2,17 @@ import { Briefcase } from "lucide-react";
 import type { FC } from "react";
 
 interface RoleAvatarProps {
-  isChart: boolean;
+  variant: "simple" | "detailed";
   isSmall: boolean;
   assignedPerson?: { id: string; name: string; imageUrl: string };
 }
 
 export const RoleAvatar: FC<RoleAvatarProps> = ({
-  isChart,
+  variant,
   isSmall,
   assignedPerson,
 }) => {
-  if (!isChart || isSmall) return null;
+  if (variant === "simple" || isSmall) return null;
 
   if (assignedPerson) {
     return (

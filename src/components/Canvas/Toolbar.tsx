@@ -10,6 +10,7 @@ import {
   SkipBack,
   SkipForward,
 } from "lucide-react";
+import { Toolbar as ToolbarPrimitive } from "../ui/Toolbar";
 
 interface ToolbarProps {
   toolMode: "select" | "pan" | "track" | "record" | "present";
@@ -68,7 +69,7 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-1">
+            <ToolbarPrimitive.Group className="px-1">
               {toolMode === "present" ? (
                 <>
                   <div className="flex items-center gap-2 px-2 text-xs font-bold text-slate-500">
@@ -76,95 +77,73 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(
                       {currentStepIndex + 1} / {stepCount}
                     </span>
                   </div>
-                  <div className="w-px h-6 bg-slate-200 mx-1" />
-                  <button
+                  <ToolbarPrimitive.Separator />
+                  <ToolbarPrimitive.Item
                     onClick={onPrevStep}
                     disabled={currentStepIndex === 0}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${
-                      currentStepIndex === 0
-                        ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                        : "bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <SkipBack size={16} /> <span>Prev Step</span>
-                  </button>
-                  <button
+                    variant="nav"
+                    icon={<SkipBack size={16} />}
+                    label="Prev Step"
+                  />
+                  <ToolbarPrimitive.Item
                     onClick={onNextStep}
                     disabled={currentStepIndex >= stepCount - 1}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${
-                      currentStepIndex >= stepCount - 1
-                        ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                        : "bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <SkipForward size={16} /> <span>Next Step</span>
-                  </button>
-                  <div className="w-px h-6 bg-slate-200 mx-1" />
-                  <button
+                    variant="nav"
+                    icon={<SkipForward size={16} />}
+                    label="Next Step"
+                  />
+                  <ToolbarPrimitive.Separator />
+                  <ToolbarPrimitive.Item
                     onClick={() => setToolMode("select")}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all text-red-600 hover:bg-red-50"
-                  >
-                    <StopCircle size={16} /> <span>End Presentation</span>
-                  </button>
+                    variant="danger"
+                    icon={<StopCircle size={16} />}
+                    label="End Presentation"
+                  />
                 </>
               ) : (
                 <>
-                  <button
+                  <ToolbarPrimitive.Item
                     onClick={() => setToolMode("select")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${
-                      toolMode === "select"
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    <MousePointer2 size={16} /> <span>Cursor</span>
-                  </button>
-                  <button
+                    isActive={toolMode === "select"}
+                    icon={<MousePointer2 size={16} />}
+                    label="Cursor"
+                  />
+                  <ToolbarPrimitive.Item
                     onClick={() => setToolMode("pan")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${
-                      toolMode === "pan"
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Hand size={16} /> <span>Pan</span>
-                  </button>
-                  <button
+                    isActive={toolMode === "pan"}
+                    icon={<Hand size={16} />}
+                    label="Pan"
+                  />
+                  <ToolbarPrimitive.Item
                     onClick={() => setToolMode("track")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${
-                      toolMode === "track"
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Square size={16} /> <span>Track</span>
-                  </button>
-                  <div className="w-px h-6 bg-slate-200 mx-1" />
-                  <button
+                    isActive={toolMode === "track"}
+                    icon={<Square size={16} />}
+                    label="Track"
+                  />
+                  <ToolbarPrimitive.Separator />
+                  <ToolbarPrimitive.Item
                     onClick={onCapture}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all text-slate-500 hover:bg-slate-50 relative"
+                    icon={<Camera size={16} />}
+                    label="Capture"
                   >
-                    <Camera size={16} /> <span>Capture</span>
                     <span className="absolute -top-3 -right-3 bg-slate-800 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-100 font-bold">
                       {stepCount}
                     </span>
-                  </button>
-                  <button
+                  </ToolbarPrimitive.Item>
+                  <ToolbarPrimitive.Item
                     onClick={onResetRecording}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all text-slate-500 hover:bg-slate-50"
-                  >
-                    <Trash2 size={16} /> <span>Reset</span>
-                  </button>
-                  <div className="w-px h-6 bg-slate-200 mx-1" />
-                  <button
+                    icon={<Trash2 size={16} />}
+                    label="Reset"
+                  />
+                  <ToolbarPrimitive.Separator />
+                  <ToolbarPrimitive.Item
                     onClick={() => setToolMode("present")}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all text-slate-500 hover:bg-slate-50"
-                  >
-                    <Play size={16} /> <span>Present</span>
-                  </button>
+                    icon={<Play size={16} />}
+                    label="Present"
+                  />
                 </>
               )}
-            </div>
+            </ToolbarPrimitive.Group>
           )}
         </div>
       </div>

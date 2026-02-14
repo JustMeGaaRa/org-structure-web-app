@@ -4,7 +4,7 @@ import { RoleStatus } from "./RoleStatus";
 import { RoleAvatar } from "./RoleAvatar";
 import { RoleInfo } from "./RoleInfo";
 import { RoleMenu } from "./RoleMenu";
-import { motion } from "framer-motion";
+import { Card as CardPrimitive } from "../ui/Card";
 
 /**
  * RoleCard Component
@@ -20,9 +20,9 @@ export const RoleCard: FC<{
   onApprove: (roleId: string) => void;
   onClear: (roleId: string) => void;
   onToggleSize: (roleId: string) => void;
-  isOverDeleteZone: boolean;
+  isDanger: boolean;
   isSelected?: boolean;
-  viewMode: "chart" | "structure";
+  variant: "simple" | "detailed";
   animate?: boolean;
 }> = ({
   roleData,
@@ -32,9 +32,9 @@ export const RoleCard: FC<{
   onApprove,
   onClear,
   onToggleSize,
-  isOverDeleteZone,
+  isDanger,
   isSelected,
-  viewMode,
+  variant,
   animate = false,
 }) => {
   const [isOver, setIsOver] = useState(false);
@@ -48,7 +48,6 @@ export const RoleCard: FC<{
     x,
     y,
   } = roleData;
-  const isChart = viewMode === "chart";
   const isSmall = size === "small";
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -74,39 +73,30 @@ export const RoleCard: FC<{
   const cardHeight = isSmall ? "h-auto min-h-[80px]" : "h-64";
 
   return (
-    <motion.div
-      // Remove layout={animate} to allow CSS transitions for top/left
-      initial={animate ? { opacity: 0, scale: 0.8 } : false}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={animate ? { opacity: 0, scale: 0.8 } : undefined}
-      transition={{ duration: 0.3 }}
+    <CardPrimitive
+      animate={animate}
+      isDragging={isDragging}
+      isSelected={isSelected}
+      isDanger={isDanger}
       onMouseDown={onMouseDown}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`absolute ${cardWidth} ${cardHeight} border bg-white p-5 rounded-2xl flex flex-col select-none cursor-grab active:cursor-grabbing ${
-        animate
-          ? "transition-[top,left,width,height,box-shadow] duration-500 ease-in-out"
-          : "transition-shadow"
-      } ${
-        isDragging
-          ? `shadow-2xl ring-2 ${isOverDeleteZone ? "ring-red-500 scale-90 opacity-50" : "ring-blue-400"} z-50`
-          : `shadow-sm hover:shadow-md z-40 ${isSelected ? "ring-2 ring-blue-500 border-transparent" : ""}`
-      } ${isOver ? "ring-4 ring-green-400 border-transparent bg-green-50" : !isDragging && !isSelected ? "border-slate-200" : ""}`}
+      className={`${cardWidth} ${cardHeight} p-5 ${isOver ? "ring-4 ring-green-400 border-transparent bg-green-50" : ""}`}
       style={{ left: `${x}px`, top: `${y}px`, transformOrigin: "top left" }}
     >
-      <div className="flex justify-between items-start mb-2 relative">
+      <CardPrimitive.Header className="mb-2">
         <div className="relative">
           <RoleAvatar
-            isChart={isChart}
+            variant={variant}
             isSmall={isSmall}
             assignedPerson={assignedPerson}
           />
-          <RoleStatus status={status} isChart={isChart} isSmall={isSmall} />
+          <RoleStatus status={status} variant={variant} isSmall={isSmall} />
         </div>
 
         <RoleMenu
-          isChart={isChart}
+          variant={variant}
           isSmall={isSmall}
           roleData={roleData}
           status={status}
@@ -114,14 +104,17 @@ export const RoleCard: FC<{
           onApprove={onApprove}
           onClear={onClear}
         />
-      </div>
-      <RoleInfo
-        isChart={isChart}
-        isSmall={isSmall}
-        role={role}
-        summary={summary}
-        assignedPerson={assignedPerson}
-      />
-    </motion.div>
+      </CardPrimitive.Header>
+
+      <CardPrimitive.Body className="flex flex-col">
+        <RoleInfo
+          variant={variant}
+          isSmall={isSmall}
+          role={role}
+          summary={summary}
+          assignedPerson={assignedPerson}
+        />
+      </CardPrimitive.Body>
+    </CardPrimitive>
   );
 };

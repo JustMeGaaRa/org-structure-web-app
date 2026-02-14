@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 interface RoleMenuProps {
-  isChart: boolean;
+  variant: "simple" | "detailed";
   isSmall: boolean;
   roleData: { id: string };
   status?: "unassigned" | "suggested" | "assigned";
@@ -18,7 +18,7 @@ interface RoleMenuProps {
 }
 
 export const RoleMenu: FC<RoleMenuProps> = ({
-  isChart,
+  variant,
   isSmall,
   roleData,
   status,
@@ -39,7 +39,7 @@ export const RoleMenu: FC<RoleMenuProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!isChart) return null;
+  if (variant === "simple") return null;
 
   return (
     <div className="relative" ref={menuRef}>

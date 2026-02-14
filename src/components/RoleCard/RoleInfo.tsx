@@ -1,7 +1,7 @@
 import type { FC } from "react";
 
 interface RoleInfoProps {
-  isChart: boolean;
+  variant: "simple" | "detailed";
   isSmall: boolean;
   role: string;
   summary: string;
@@ -9,7 +9,7 @@ interface RoleInfoProps {
 }
 
 export const RoleInfo: FC<RoleInfoProps> = ({
-  isChart,
+  variant,
   isSmall,
   role,
   summary,
@@ -20,9 +20,9 @@ export const RoleInfo: FC<RoleInfoProps> = ({
       <h2
         className={`font-bold text-slate-900 leading-tight truncate ${isSmall ? "text-sm" : "text-base"}`}
       >
-        {isChart && assignedPerson ? assignedPerson.name : role}
+        {variant === "detailed" && assignedPerson ? assignedPerson.name : role}
       </h2>
-      {isChart && assignedPerson && (
+      {variant === "detailed" && assignedPerson && (
         <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 truncate">
           {role}
         </p>

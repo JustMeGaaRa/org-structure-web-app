@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { FC } from "react";
 import { ResizeHandle } from "./ResizeHandle";
-import { Pencil, Ungroup } from "lucide-react";
+import { TrackLabel } from "./TrackLabel";
+import { UngroupButton } from "./UngroupButton";
 import type { TrackData } from "../../types";
 
 /**
@@ -21,7 +21,7 @@ export const Track: FC<{
   ) => void;
   onNameChange: (id: string, newName: string) => void;
   onUngroup: (id: string) => void;
-  isOverDeleteZone: boolean;
+  isDanger: boolean;
   isSelected: boolean;
   animate?: boolean;
 }> = ({
@@ -32,47 +32,17 @@ export const Track: FC<{
   onResizeStart,
   onNameChange,
   onUngroup,
-  isOverDeleteZone,
+  isDanger,
   isSelected,
   animate = false,
 }) => {
-  const { x, y, width, height, name } = trackData;
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempName, setTempName] = useState(name || "New Group");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
+  const { x, y, width, height } = trackData;
 
   const handleResize = (
     e: React.MouseEvent<HTMLDivElement>,
     direction: "top" | "bottom" | "left" | "right",
   ) => {
     onResizeStart(e, trackData.id, direction);
-  };
-
-  const handleStartEditing = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setTempName(name || "New Group");
-    setIsEditing(true);
-  };
-
-  const handleNameSave = () => {
-    setIsEditing(false);
-    if (tempName.trim()) {
-      onNameChange(trackData.id, tempName);
-    } else {
-      setTempName(name || "New Group");
-    }
-  };
-
-  const handleUngroup = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent select/drag
-    onUngroup(trackData.id);
   };
 
   return (
@@ -89,7 +59,7 @@ export const Track: FC<{
           : "transition-shadow"
       } ${
         isDragging
-          ? `shadow-xl border-blue-400 bg-blue-50/10 z-20 ${isOverDeleteZone ? "border-red-500 opacity-50" : ""}`
+          ? `shadow-xl border-blue-400 bg-blue-50/10 z-20 ${isDanger ? "border-red-500 opacity-50" : ""}`
           : `${isSelected ? "border-blue-500 bg-blue-50/5 z-10" : "border-slate-300 bg-transparent z-0 hover:border-slate-400"}`
       }`}
       style={{
@@ -100,58 +70,23 @@ export const Track: FC<{
         cursor: isResizing ? "grabbing" : "grab",
       }}
     >
-      {/* Label */}
-      <div
-        className={`absolute bottom-full left-4 px-3 py-1 rounded-t-lg rounded-b-none text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm border-x border-t border-b-0 z-30 ${
-          isSelected
-            ? "bg-blue-500 text-white border-blue-500"
-            : "bg-slate-300 text-slate-700 border-slate-300 hover:bg-slate-400 hover:border-slate-400"
-        }`}
-        onClick={handleStartEditing}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        {isEditing ? (
-          <input
-            ref={inputRef}
-            value={tempName}
-            onChange={(e) => setTempName(e.target.value)}
-            onBlur={handleNameSave}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleNameSave();
-              e.stopPropagation();
-            }}
-            className={`bg-transparent outline-none min-w-[60px] text-center ${isSelected ? "text-white placeholder-blue-200" : "text-slate-900"}`}
-            style={{ width: `${Math.max(tempName.length * 8, 60)}px` }}
-          />
-        ) : (
-          <>
-            {name || "Group"}
-            <Pencil
-              size={10}
-              className={`opacity-0 group-hover:opacity-100 transition-opacity ${isSelected ? "text-white" : "text-slate-500"}`}
-            />
-          </>
-        )}
-      </div>
+      <TrackLabel
+        name={trackData.name || ""}
+        isSelected={isSelected}
+        onNameChange={(newName) => onNameChange(trackData.id, newName)}
+      />
 
-      {/* Ungroup Button */}
-      <button
-        onClick={handleUngroup}
-        onMouseDown={(e) => e.stopPropagation()}
-        className={`absolute bottom-full right-4 p-1 rounded-t-md rounded-b-none shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-30 border-x border-t border-b-0 ${
-          isSelected
-            ? "bg-blue-500 text-white border-blue-500 hover:bg-red-500 hover:border-red-500"
-            : "bg-slate-300 text-slate-700 border-slate-300 hover:bg-red-100 hover:text-red-700 hover:border-red-200"
-        }`}
-        title="Ungroup cards"
-      >
-        <Ungroup size={14} />
-      </button>
+      <UngroupButton
+        onUngroup={(e) => {
+          e.stopPropagation(); // Prevent select/drag
+          onUngroup(trackData.id);
+        }}
+        isSelected={isSelected}
+      />
 
-      <ResizeHandle direction="top" onResizeStart={handleResize} />
-      <ResizeHandle direction="bottom" onResizeStart={handleResize} />
-      <ResizeHandle direction="left" onResizeStart={handleResize} />
-      <ResizeHandle direction="right" onResizeStart={handleResize} />
+      {(["top", "bottom", "left", "right"] as const).map((dir) => (
+        <ResizeHandle key={dir} direction={dir} onResizeStart={handleResize} />
+      ))}
     </motion.div>
   );
 };

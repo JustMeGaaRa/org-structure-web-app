@@ -3,16 +3,16 @@ import type { FC } from "react";
 
 interface RoleStatusProps {
   status: "unassigned" | "suggested" | "assigned";
-  isChart: boolean;
+  variant: "simple" | "detailed";
   isSmall: boolean;
 }
 
 export const RoleStatus: FC<RoleStatusProps> = ({
   status,
-  isChart,
+  variant,
   isSmall,
 }) => {
-  if (!isChart) return null;
+  if (variant === "simple") return null;
 
   const statusConfig = {
     unassigned: {
